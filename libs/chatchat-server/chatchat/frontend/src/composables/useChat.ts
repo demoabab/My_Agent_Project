@@ -117,6 +117,7 @@ export function useChat() {
     abortController.value = null
     scrollToBottom()
     saveLocalHistory()
+    persistSession()
   }
 
   function ensureConversation() {
@@ -131,6 +132,7 @@ export function useChat() {
     conversationId.value = genId()
     localStorage.setItem('current_conv_id', conversationId.value)
     messages.value = []
+    persistSession()
   }
 
   function saveLocalHistory() {
@@ -140,17 +142,65 @@ export function useChat() {
       const list = raw ? JSON.parse(raw) : []
       const lastUser = [...messages.value].reverse().find((m) => m.role === 'user')
       const title = lastUser?.content?.substring(0, 50) || '对话'
-      list.push({
+      // Replace existing entry with same conversation_id
+      const existingIdx = list.findIndex((x: { id: string }) => x.id === conversationId.value)
+      const entry = {
         id: conversationId.value,
         title,
         mode: currentMode.value,
         time: new Date().toLocaleString(),
         preview: lastUser?.content?.substring(0, 100) || '',
         messages: messages.value.map((m) => ({ ...m })),
-      })
+      }
+      if (existingIdx >= 0) {
+        list[existingIdx] = entry
+      } else {
+        list.push(entry)
+      }
       if (list.length > 50) list.splice(0, list.length - 50)
       localStorage.setItem('chat_history', JSON.stringify(list))
     } catch { /* ignore */ }
+  }
+
+  // Session persistence (survive page navigation)
+  function persistSession() {
+    try {
+      const session = {
+        messages: messages.value.map((m) => ({ ...m })),
+        conversationId: conversationId.value,
+        mode: currentMode.value,
+      }
+      localStorage.setItem('current_chat_session', JSON.stringify(session))
+    } catch { /* ignore */ }
+  }
+
+  function restoreSession(mode: 'kb' | 'llm'): boolean {
+    try {
+      // Check for "continue from history" first
+      const continueData = localStorage.getItem('continue_conversation')
+      if (continueData) {
+        const data = JSON.parse(continueData)
+        if (data.mode === mode) {
+          messages.value = data.messages || []
+          conversationId.value = data.conversation_id || data.id || ''
+          localStorage.removeItem('continue_conversation')
+          localStorage.setItem('current_conv_id', conversationId.value)
+          return true
+        }
+      }
+      // Restore current session for this mode
+      const raw = localStorage.getItem('current_chat_session')
+      if (raw) {
+        const session = JSON.parse(raw)
+        if (session.mode === mode && session.messages?.length > 0) {
+          messages.value = session.messages
+          conversationId.value = session.conversationId || ''
+          localStorage.setItem('current_conv_id', conversationId.value)
+          return true
+        }
+      }
+    } catch { /* ignore */ }
+    return false
   }
 
   async function sendKbQuery(
@@ -277,6 +327,7 @@ export function useChat() {
     streamStatus.value = -1
     error.value = ''
     isStreaming.value = false
+    persistSession()
   }
 
   return {
@@ -297,5 +348,7 @@ export function useChat() {
     clearMessages,
     newConversation,
     ensureConversation,
+    persistSession,
+    restoreSession,
   }
 }

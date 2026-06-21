@@ -31,9 +31,15 @@
               <span class="history-preview">{{ item.preview }}</span>
             </div>
           </div>
-          <el-button link type="danger" size="small" @click.stop="deleteHistory(idx)">
-            <el-icon><Delete /></el-icon>
-          </el-button>
+          <div class="history-actions">
+            <el-button link type="primary" size="small" @click.stop="continueConversation(item)">
+              <el-icon><VideoPlay /></el-icon>
+              继续对话
+            </el-button>
+            <el-button link type="danger" size="small" @click.stop="deleteHistory(idx)">
+              <el-icon><Delete /></el-icon>
+            </el-button>
+          </div>
         </el-card>
       </div>
     </el-card>
@@ -62,18 +68,26 @@
           <div class="history-msg-content" v-html="renderMarkdown(msg.content)" />
         </div>
       </div>
+      <template #footer>
+        <el-button @click="dialogVisible = false">关闭</el-button>
+        <el-button v-if="selectedHistory" type="primary" @click="continueConversation(selectedHistory)">继续对话</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { marked } from 'marked'
 import type { ChatMessage } from '@/types'
+
+const router = useRouter()
 
 const renderOptions = { breaks: true, gfm: true }
 
 interface HistoryItem {
+  id: string
   title: string
   mode: string
   time: string
@@ -106,6 +120,16 @@ function deleteHistory(idx: number) {
   localStorage.setItem('chat_history', JSON.stringify(reversed))
 }
 
+function continueConversation(item: HistoryItem) {
+  localStorage.setItem('continue_conversation', JSON.stringify({
+    messages: item.messages,
+    conversation_id: item.id,
+    mode: item.mode,
+  }))
+  dialogVisible.value = false
+  router.push(item.mode === 'kb' ? '/chat' : '/llm-chat')
+}
+
 function renderMarkdown(text: string): string {
   try {
     return marked(text, renderOptions) as string
@@ -136,6 +160,12 @@ loadHistory()
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
+}
+.history-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
 }
 .history-info h4 {
   margin: 0 0 6px 0;

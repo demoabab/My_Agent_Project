@@ -4,11 +4,25 @@ from fastapi import APIRouter, Body
 
 from chatchat.server.types.server.response.base import BaseResponse
 from chatchat.settings import Settings
-from chatchat.server.utils import get_prompt_template, get_server_configs
+from chatchat.server.utils import get_prompt_template, get_server_configs, get_config_models
 
 server_router = APIRouter(prefix="/server", tags=["Server State"])
 
 available_template_types = list(Settings.prompt_settings.model_fields.keys())
+
+
+@server_router.get("/llm_models", summary="获取可用的 LLM 模型列表")
+async def get_llm_models():
+    models = get_config_models(model_type="llm")
+    data = list(models.keys())
+    return BaseResponse.success(data)
+
+
+@server_router.get("/embedding_models", summary="获取可用的 Embedding 模型列表")
+async def get_embedding_models():
+    models = get_config_models(model_type="embed")
+    data = list(models.keys())
+    return BaseResponse.success(data)
 
 # 服务器相关接口
 server_router.post(

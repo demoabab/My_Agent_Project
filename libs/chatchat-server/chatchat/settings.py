@@ -13,8 +13,17 @@ from pydantic import model_validator, SecretStr
 from chatchat.pydantic_settings_file import *
 
 
-# chatchat 数据目录，必须通过环境变量设置。如未设置则自动使用当前目录。
-CHATCHAT_ROOT = Path(os.environ.get("CHATCHAT_ROOT", ".")).resolve()
+# chatchat 数据目录，自动检测：环境变量 > 项目根 > 当前目录
+_CHATCHAT_ROOT = Path(os.environ.get("CHATCHAT_ROOT", ".")).resolve()
+if not (_CHATCHAT_ROOT / "data").exists():
+    _pkg_root = Path(__file__).resolve().parents[3]
+    _fallback = _pkg_root / "chatchat_data"
+    _CHATCHAT_ROOT = _fallback if (_fallback / "data").exists() else _CHATCHAT_ROOT
+CHATCHAT_ROOT = _CHATCHAT_ROOT
+import sys
+print(f"[DEBUG] CHATCHAT_ROOT={CHATCHAT_ROOT}", file=sys.stderr)
+print(f"[DEBUG] data exists={(CHATCHAT_ROOT / 'data').exists()}", file=sys.stderr)
+print(f"[DEBUG] DB file={(CHATCHAT_ROOT / 'data' / 'knowledge_base' / 'info.db')} exists={(CHATCHAT_ROOT / 'data' / 'knowledge_base' / 'info.db').exists()}", file=sys.stderr)
 
 XF_MODELS_TYPES = {
     "text2image": {"model_family": ["stable_diffusion"]},
@@ -92,12 +101,14 @@ class BasicSettings(BaseFileSettings):
         return p
 
     KB_ROOT_PATH: str = str(CHATCHAT_ROOT / "data/knowledge_base")
+    print(f"[DEBUG BasicSettings] CHATCHAT_ROOT={CHATCHAT_ROOT}", file=sys.stderr)
+    print(f"[DEBUG BasicSettings] KB_ROOT_PATH={KB_ROOT_PATH}", file=sys.stderr)
     """知识库默认存储路径"""
 
     DB_ROOT_PATH: str = str(CHATCHAT_ROOT / "data/knowledge_base/info.db")
     """数据库默认存储路径。如果使用sqlite，可以直接修改DB_ROOT_PATH；如果使用其它数据库，请直接修改SQLALCHEMY_DATABASE_URI。"""
 
-    SQLALCHEMY_DATABASE_URI:str = "sqlite:///" + str(CHATCHAT_ROOT / "data/knowledge_base/info.db")
+    SQLALCHEMY_DATABASE_URI:str = "sqlite:///" + (CHATCHAT_ROOT / "data/knowledge_base/info.db").as_posix()
     """知识库信息数据库连接URI"""
 
     OPEN_CROSS_DOMAIN: bool = False

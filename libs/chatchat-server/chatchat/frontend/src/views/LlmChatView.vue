@@ -129,6 +129,7 @@ const {
   stopStreaming,
   clearMessages,
   newConversation,
+  restoreSession,
 } = useChat()
 
 const inputText = ref('')
@@ -140,13 +141,14 @@ const selectedTools = ref<string[]>([])
 const useMcp = ref(false)
 
 onMounted(async () => {
+  restoreSession('llm')
   try {
-    const [modelRes, toolRes] = await Promise.all([
-      getLlmModels(),
-      listTools(),
-    ])
-    availableModels.value = modelRes.data || []
-    availableTools.value = (toolRes.data as Record<string, never>) || {}
+    const res = await getLlmModels()
+    availableModels.value = res.data || []
+  } catch { /* ignore */ }
+  try {
+    const res = await listTools()
+    availableTools.value = (res.data as Record<string, never>) || {}
   } catch { /* ignore */ }
 })
 

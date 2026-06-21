@@ -145,6 +145,7 @@ const {
   stopStreaming,
   clearMessages,
   newConversation,
+  restoreSession,
 } = useChat()
 
 const selectedKb = ref('')
@@ -157,10 +158,11 @@ const inputText = ref('')
 const uploading = ref(false)
 
 onMounted(async () => {
+  restoreSession('kb')
   try {
     const res = await listKbs()
     kbList.value = res.data || []
-    if (kbList.value.length > 0) selectedKb.value = kbList.value[0].kb_name
+    if (kbList.value.length > 0 && !selectedKb.value) selectedKb.value = kbList.value[0].kb_name
   } catch { /* ignore */ }
 })
 
