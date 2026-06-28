@@ -13,69 +13,72 @@
           multiple
           accept=".txt,.pdf,.md,.docx,.pptx,.xlsx,.html,.csv,.json"
         >
-          <el-button type="primary">
-            <el-icon><Upload /></el-icon>
+          <el-button type="primary" :icon="Upload">
             上传文件
           </el-button>
         </el-upload>
-        <el-button @click="handleRecreate" :loading="recreating">
-          <el-icon><Refresh /></el-icon>
+        <el-button :icon="Refresh" @click="handleRecreate" :loading="recreating">
           重建向量库
         </el-button>
       </div>
     </div>
 
-    <!-- Search -->
     <div class="search-bar">
       <el-input
         v-model="searchQuery"
         placeholder="搜索文档内容..."
         clearable
-        style="width: 300px"
+        style="width: 360px"
+        :prefix-icon="Search"
         @keyup.enter="handleSearch"
-      >
-        <template #prefix>
-          <el-icon><Search /></el-icon>
-        </template>
-      </el-input>
+      />
     </div>
 
     <el-row :gutter="16">
-      <!-- File List -->
       <el-col :span="16">
-        <el-card header="文件列表">
+        <el-card shadow="never" class="content-card">
+          <template #header>
+            <div class="card-header">
+              <span class="card-title">文件列表</span>
+              <span class="card-count">{{ fileList.length }} 个文件</span>
+            </div>
+          </template>
           <el-table :data="fileList" v-loading="loadingFiles" stripe>
             <el-table-column prop="file_name" label="文件名" min-width="200" show-overflow-tooltip />
             <el-table-column prop="file_ext" label="类型" width="80" />
-            <el-table-column label="大小" width="100">
+            <el-table-column label="大小" width="100" align="center">
               <template #default="{ row }">
                 {{ formatSize(row.file_size) }}
               </template>
             </el-table-column>
-            <el-table-column prop="status" label="状态" width="100">
+            <el-table-column label="状态" width="100" align="center">
               <template #default="{ row }">
-                <el-tag :type="row.status === 'green' ? 'success' : 'warning'" size="small">
+                <el-tag :type="row.status === 'green' ? 'success' : 'warning'" size="small" effect="plain">
                   {{ statusLabel(row.status) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="120">
+            <el-table-column label="操作" width="130" fixed="right">
               <template #default="{ row }">
-                <el-button link type="primary" @click="handleDownload(row.file_name)">下载</el-button>
-                <el-button link type="danger" @click="handleDeleteFile(row.file_name)">删除</el-button>
+                <el-button link type="primary" size="small" @click="handleDownload(row.file_name)">下载</el-button>
+                <el-button link type="danger" size="small" @click="handleDeleteFile(row.file_name)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
-          <el-empty v-if="!loadingFiles && fileList.length === 0" description="暂无文件" />
+          <el-empty v-if="!loadingFiles && fileList.length === 0" description="暂无文件，请上传" />
         </el-card>
       </el-col>
 
-      <!-- Search Results -->
       <el-col :span="8">
-        <el-card header="搜索结果">
+        <el-card shadow="never" class="content-card">
+          <template #header>
+            <div class="card-header">
+              <span class="card-title">搜索结果</span>
+            </div>
+          </template>
           <div v-if="searchResults.length === 0" class="no-results">
-            <el-icon :size="32" color="#c0c4cc"><Search /></el-icon>
-            <p style="color: #c0c4cc; margin-top: 8px">输入关键词搜索文档</p>
+            <el-icon :size="36" color="#dcdfe6"><Search /></el-icon>
+            <p>输入关键词搜索文档</p>
           </div>
           <div v-else class="search-results">
             <div
@@ -85,7 +88,7 @@
             >
               <div class="result-header">
                 <span class="result-file">{{ doc.file_name }}</span>
-                <el-tag size="small">{{ doc.score?.toFixed(3) }}</el-tag>
+                <el-tag size="small" effect="plain">{{ doc.score?.toFixed(3) }}</el-tag>
               </div>
               <div class="result-content">{{ doc.content?.substring(0, 200) }}...</div>
             </div>
@@ -100,6 +103,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Upload, Refresh, Search } from '@element-plus/icons-vue'
 import {
   listFiles,
   uploadDocs,
@@ -213,11 +217,7 @@ function formatSize(bytes: number): string {
 }
 
 function statusLabel(status: string): string {
-  const map: Record<string, string> = {
-    green: '就绪',
-    yellow: '处理中',
-    red: '失败',
-  }
+  const map: Record<string, string> = { green: '就绪', yellow: '处理中', red: '失败' }
   return map[status] || status
 }
 
@@ -226,56 +226,33 @@ onMounted(fetchFiles)
 
 <style scoped>
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: #fff;
-  border-radius: 4px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px; padding: 12px 20px;
+  background: #fff; border-radius: 8px; border: 1px solid #ebeef5;
 }
-.kb-title {
-  font-size: 18px;
-  font-weight: bold;
-}
-.header-actions {
-  display: flex;
-  gap: 8px;
-}
-.search-bar {
-  margin-bottom: 16px;
-}
+.kb-title { font-size: 18px; font-weight: 700; }
+.header-actions { display: flex; gap: 8px; }
+
+.search-bar { margin-bottom: 16px; }
+
+.content-card { border: 1px solid #ebeef5; border-radius: 8px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-title { font-size: 14px; font-weight: 600; }
+.card-count { font-size: 12px; color: #909399; }
+
 .no-results {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 32px 0;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 40px 0; color: #c0c4cc; gap: 8px;
 }
-.search-results {
-  max-height: 500px;
-  overflow-y: auto;
-}
+
+.search-results { max-height: 520px; overflow-y: auto; }
 .search-result-item {
-  padding: 10px 0;
-  border-bottom: 1px solid #ebeef5;
+  padding: 10px 0; border-bottom: 1px solid #ebeef5;
 }
-.search-result-item:last-child {
-  border-bottom: none;
-}
+.search-result-item:last-child { border-bottom: none; }
 .result-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
 }
-.result-file {
-  font-size: 13px;
-  font-weight: 500;
-  color: #409EFF;
-}
-.result-content {
-  font-size: 12px;
-  color: #606266;
-  line-height: 1.5;
-}
+.result-file { font-size: 13px; font-weight: 600; color: #409EFF; }
+.result-content { font-size: 12px; color: #606266; line-height: 1.6; }
 </style>

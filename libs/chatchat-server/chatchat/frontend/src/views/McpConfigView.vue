@@ -1,32 +1,29 @@
 <template>
   <div class="mcp-page">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>MCP 连接管理</span>
-          <el-button type="primary" size="small" @click="showCreateDialog = true">
-            <el-icon><Plus /></el-icon>
-            新建连接
-          </el-button>
-        </div>
-      </template>
+    <div class="page-toolbar">
+      <h3 class="page-title">MCP 连接管理</h3>
+      <el-button type="primary" :icon="Plus" @click="showCreateDialog = true">
+        新建连接
+      </el-button>
+    </div>
 
+    <el-card shadow="never" class="content-card">
       <el-table :data="connections" v-loading="loading" stripe>
         <el-table-column prop="server_name" label="服务器名称" min-width="160" />
         <el-table-column prop="transport" label="传输方式" width="100" />
-        <el-table-column label="状态" width="100">
+        <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.enabled ? 'success' : 'info'" size="small">
+            <el-tag :type="row.enabled ? 'success' : 'info'" size="small" effect="plain">
               {{ row.enabled ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-        <el-table-column label="操作" width="240">
+        <el-table-column label="操作" width="240" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="handleTest(row.id)">测试</el-button>
-            <el-button link @click="handleEdit(row as unknown as McpConnection)">编辑</el-button>
-            <el-button link type="danger" @click="handleDelete(row.id)">删除</el-button>
+            <el-button link type="primary" size="small" @click="handleTest(row.id)">测试</el-button>
+            <el-button link size="small" @click="handleEdit(row as unknown as McpConnection)">编辑</el-button>
+            <el-button link type="danger" size="small" @click="handleDelete(row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -34,11 +31,10 @@
       <el-empty v-if="!loading && connections.length === 0" description="暂无 MCP 连接" />
     </el-card>
 
-    <!-- Create/Edit Dialog -->
     <el-dialog
       v-model="showCreateDialog"
       :title="editing ? '编辑连接' : '新建连接'"
-      width="500px"
+      width="520px"
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
         <el-form-item label="服务器名称" prop="server_name">
@@ -74,6 +70,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import {
   listMcpConnections,
   createMcpConnection,
@@ -210,9 +207,12 @@ onMounted(fetchList)
 </script>
 
 <style scoped>
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.mcp-page { max-width: 960px; }
+.page-toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
 }
+.page-title { margin: 0; font-size: 18px; font-weight: 600; color: #303133; }
+
+.content-card { border: 1px solid #ebeef5; border-radius: 8px; }
 </style>

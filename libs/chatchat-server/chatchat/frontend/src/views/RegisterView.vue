@@ -1,61 +1,67 @@
 <template>
   <div class="register-wrapper">
-    <el-card class="register-card">
-      <h2 class="register-title">注册账号</h2>
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-position="top"
-        @submit.prevent="handleRegister"
-      >
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" placeholder="请输入用户名" size="large" />
-        </el-form-item>
-        <el-form-item label="密码" prop="password">
-          <el-input
-            v-model="form.password"
-            type="password"
-            placeholder="请输入密码"
-            show-password
-            size="large"
-          />
-        </el-form-item>
-        <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input
-            v-model="form.confirmPassword"
-            type="password"
-            placeholder="请再次输入密码"
-            show-password
-            size="large"
-          />
-        </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="form.email" placeholder="请输入邮箱（选填）" size="large" />
-        </el-form-item>
-        <el-form-item label="姓名" prop="fullName">
-          <el-input v-model="form.fullName" placeholder="请输入姓名（选填）" size="large" />
-        </el-form-item>
-        <el-form-item>
-          <el-button
-            type="primary"
-            size="large"
-            style="width: 100%"
-            :loading="loading"
-            @click="handleRegister"
-          >
-            注册
-          </el-button>
-        </el-form-item>
-      </el-form>
-      <div class="register-footer">
-        <span>已有账号？</span>
-        <router-link to="/login">立即登录</router-link>
+    <div class="register-card-container">
+      <div class="register-brand">
+        <div class="brand-icon">CC</div>
+        <h1 class="brand-name">ChatChat</h1>
       </div>
-      <div v-if="error" class="register-error">
-        <el-alert :title="error" type="error" :closable="false" />
-      </div>
-    </el-card>
+      <el-card shadow="never" class="register-card">
+        <h2 class="register-title">注册账号</h2>
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-position="top"
+          @submit.prevent="handleRegister"
+        >
+          <el-form-item label="用户名" prop="username">
+            <el-input v-model="form.username" placeholder="请输入用户名" size="large" />
+          </el-form-item>
+          <el-form-item label="密码" prop="password">
+            <el-input
+              v-model="form.password"
+              type="password"
+              placeholder="请输入密码"
+              show-password
+              size="large"
+            />
+          </el-form-item>
+          <el-form-item label="确认密码" prop="confirmPassword">
+            <el-input
+              v-model="form.confirmPassword"
+              type="password"
+              placeholder="请再次输入密码"
+              show-password
+              size="large"
+            />
+          </el-form-item>
+          <el-form-item label="邮箱" prop="email">
+            <el-input v-model="form.email" placeholder="请输入邮箱（选填）" size="large" />
+          </el-form-item>
+          <el-form-item label="姓名" prop="fullName">
+            <el-input v-model="form.fullName" placeholder="请输入姓名（选填）" size="large" />
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              type="primary"
+              size="large"
+              style="width: 100%"
+              :loading="loading"
+              @click="handleRegister"
+            >
+              注册
+            </el-button>
+          </el-form-item>
+        </el-form>
+        <div class="register-footer">
+          <span>已有账号？</span>
+          <router-link to="/login">立即登录</router-link>
+        </div>
+        <div v-if="error" class="register-error">
+          <el-alert :title="error" type="error" :closable="false" />
+        </div>
+      </el-card>
+    </div>
   </div>
 </template>
 
@@ -128,32 +134,33 @@ async function handleRegister() {
 
 <style scoped>
 .register-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: flex; justify-content: center; align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
 }
+.register-card-container {
+  width: 420px; text-align: center;
+}
+.register-brand { margin-bottom: 24px; }
+.brand-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: linear-gradient(135deg, #409EFF, #6366f1);
+  color: #fff; font-size: 18px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-bottom: 10px;
+}
+.brand-name { margin: 0; font-size: 22px; color: #fff; letter-spacing: 1px; }
+
 .register-card {
-  width: 420px;
-  padding: 8px;
+  border-radius: 10px; border: none;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
 }
 .register-title {
-  text-align: center;
-  margin-bottom: 16px;
-  font-size: 22px;
-  color: #303133;
+  text-align: center; margin: 0 0 20px; font-size: 20px; color: #303133;
 }
 .register-footer {
-  text-align: center;
-  font-size: 13px;
-  color: #909399;
+  text-align: center; font-size: 13px; color: #909399;
 }
-.register-footer a {
-  color: #409EFF;
-  margin-left: 4px;
-}
-.register-error {
-  margin-top: 12px;
-}
+.register-footer a { color: #409EFF; margin-left: 4px; }
+.register-error { margin-top: 12px; }
 </style>

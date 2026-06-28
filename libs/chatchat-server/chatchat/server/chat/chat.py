@@ -23,7 +23,7 @@ from langchain_chatchat.callbacks.agent_callback_handler import (
 from langchain_chatchat.agents.platform_tools import PlatformToolsAction, PlatformToolsFinish, \
     PlatformToolsActionToolStart, PlatformToolsActionToolEnd, PlatformToolsLLMStatus
 from chatchat.server.chat.utils import History
-from chatchat.server.db.repository import add_message_to_db, update_message
+from chatchat.server.db.repository import add_message_to_db, update_message, add_conversation_to_db, get_conversation_from_db
 
 from langchain_chatchat import ChatPlatformAI, PlatformToolsRunnable
 from chatchat.server.utils import (
@@ -162,6 +162,14 @@ async def chat(
                 langfuse_handler = CallbackHandler()
                 callbacks.append(langfuse_handler)
 
+            # Ensure conversation record exists
+            if conversation_id and not get_conversation_from_db(conversation_id):
+                add_conversation_to_db(
+                    chat_type="llm_chat",
+                    name=query[:50],
+                    conversation_id=conversation_id,
+                )
+
             models, prompts = create_models_from_config(
                 callbacks=callbacks, configs=chat_model_config, stream=stream, max_tokens=max_tokens
             )
@@ -196,7 +204,8 @@ async def chat(
                 data["message_type"] = MsgType.TEXT
                 if isinstance(item, PlatformToolsAction):
                     logger.info("PlatformToolsAction:" + str(item.to_json()))
-                    data["text"] = item.log
+                    if not stream:
+                        data["text"] = item.log
                     tool_call = {
                         "index": 0,
                         "id": item.run_id,
@@ -211,7 +220,8 @@ async def chat(
                     data["tool_calls"].append(tool_call)
 
                 elif isinstance(item, PlatformToolsFinish):
-                    data["text"] = item.log
+                    if not stream:
+                        data["text"] = item.log
 
                     last_tool.update(
                         tool_output=item.return_values["output"],
@@ -257,8 +267,13 @@ async def chat(
                     except:
                         ...
                 elif isinstance(item, PlatformToolsLLMStatus):
-
-                    data["text"] = item.text
+                    if stream:
+                        # In streaming mode, only use llm_new_token for text;
+                        # chain_end/agent_finish contain full output that duplicates streamed tokens.
+                        if item.status == AgentStatus.llm_new_token:
+                            data["text"] = item.text
+                    else:
+                        data["text"] = item.text
 
                 ret = OpenAIChatOutput(
                     id=f"chat{uuid.uuid4()}",

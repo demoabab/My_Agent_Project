@@ -18,6 +18,9 @@ from chatchat.server.chat.utils import History
 from chatchat.server.knowledge_base.kb_service.base import KBServiceFactory
 from chatchat.server.knowledge_base.kb_doc_api import search_docs, search_temp_docs
 from chatchat.server.knowledge_base.utils import format_reference
+from chatchat.server.db.repository import (
+    add_message_to_db, update_message, add_conversation_to_db, get_conversation_from_db
+)
 from chatchat.server.utils import (wrap_done, get_ChatOpenAI, get_default_llm,
                                    BaseResponse, get_prompt_template, build_logger,
                                    check_embed_model, api_address
@@ -58,16 +61,32 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
                     description="使用的prompt模板名称(在prompt_settings.yaml中配置)"
                 ),
                 return_direct: bool = Body(False, description="直接返回检索结果，不送入 LLM"),
+                conversation_id: str = Body("", description="对话框ID"),
                 request: Request = None,
                 ):
     if mode == "local_kb":
         kb = KBServiceFactory.get_service_by_name(kb_name)
         if kb is None:
             return BaseResponse(code=404, msg=f"未找到知识库 {kb_name}")
-    
+
     async def knowledge_base_chat_iterator() -> AsyncIterable[str]:
         try:
             nonlocal history, prompt_name, max_tokens
+
+            if conversation_id and not get_conversation_from_db(conversation_id):
+                add_conversation_to_db(
+                    chat_type="kb_chat",
+                    name=query[:50],
+                    conversation_id=conversation_id,
+                )
+            if conversation_id:
+                message_id = add_message_to_db(
+                    chat_type="kb_chat",
+                    query=query,
+                    conversation_id=conversation_id,
+                )
+            else:
+                message_id = None
 
             history = [History.from_data(h) for h in history]
 
@@ -180,6 +199,7 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
             if len(source_documents) == 0:  # 没有找到相关文档
                 source_documents.append(f"<span style='color:red'>未找到相关文档,该回答为大模型自身能力解答！</span>")
 
+            answer = ""
             if stream:
                 # yield documents first
                 ret = OpenAIChatOutput(
@@ -193,6 +213,7 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
                 yield ret.model_dump_json()
 
                 async for token in callback.aiter():
+                    answer += token
                     ret = OpenAIChatOutput(
                         id=f"chat{uuid.uuid4()}",
                         object="chat.completion.chunk",
@@ -202,7 +223,6 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
                     )
                     yield ret.model_dump_json()
             else:
-                answer = ""
                 async for token in callback.aiter():
                     answer += token
                 ret = OpenAIChatOutput(
@@ -214,6 +234,9 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
                 )
                 yield ret.model_dump_json()
             await task
+
+            if message_id and answer:
+                update_message(message_id, answer)
         except asyncio.exceptions.CancelledError:
             logger.warning("streaming progress has been interrupted by user.")
             return

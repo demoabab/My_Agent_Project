@@ -1,16 +1,13 @@
 <template>
   <div class="kb-list-page">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>知识库管理</span>
-          <el-button type="primary" @click="showCreateDialog = true">
-            <el-icon><Plus /></el-icon>
-            新建知识库
-          </el-button>
-        </div>
-      </template>
+    <div class="page-toolbar">
+      <h3 class="page-title">知识库管理</h3>
+      <el-button type="primary" :icon="Plus" @click="showCreateDialog = true">
+        新建知识库
+      </el-button>
+    </div>
 
+    <el-card shadow="never" class="content-card">
       <el-table :data="kbList" v-loading="loading" stripe>
         <el-table-column prop="kb_name" label="知识库名称" min-width="180">
           <template #default="{ row }">
@@ -24,8 +21,10 @@
         <el-table-column prop="file_count" label="文件数" width="100" align="center" />
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="$router.push(`/kb/${row.kb_name}`)">管理</el-button>
-            <el-button link type="danger" @click="handleDelete(row.kb_name)">删除</el-button>
+            <el-button link type="primary" size="small" @click="$router.push(`/kb/${row.kb_name}`)">
+              管理
+            </el-button>
+            <el-button link type="danger" size="small" @click="handleDelete(row.kb_name)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -33,8 +32,7 @@
       <el-empty v-if="!loading && kbList.length === 0" description="暂无知识库，请新建" />
     </el-card>
 
-    <!-- Create Dialog -->
-    <el-dialog v-model="showCreateDialog" title="新建知识库" width="450px">
+    <el-dialog v-model="showCreateDialog" title="新建知识库" width="460px" class="create-dialog">
       <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-width="100px">
         <el-form-item label="知识库名称" prop="knowledge_base_name">
           <el-input v-model="createForm.knowledge_base_name" placeholder="请输入名称" />
@@ -60,6 +58,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { listKbs, createKb, deleteKb } from '@/api/kb'
 import type { KnowledgeBase } from '@/types'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -134,13 +133,15 @@ onMounted(fetchList)
 </script>
 
 <style scoped>
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.kb-list-page { max-width: 960px; }
+.page-toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
 }
-.kb-link {
-  color: #409EFF;
-  font-weight: 500;
-}
+.page-title { margin: 0; font-size: 18px; font-weight: 600; color: #303133; }
+
+.content-card { border: 1px solid #ebeef5; border-radius: 8px; }
+
+.kb-link { color: #409EFF; font-weight: 500; }
+.kb-link:hover { color: #6366f1; }
 </style>

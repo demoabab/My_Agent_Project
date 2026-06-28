@@ -144,6 +144,37 @@ export async function chatLlm(
   }
 }
 
+export interface ConversationInfo {
+  id: string
+  name: string
+  chat_type: string
+  create_time: string
+}
+
+export interface ConversationDetail {
+  conversation: ConversationInfo
+  messages: Array<{ query: string; response: string; metadata?: Record<string, unknown> }>
+}
+
+export function listConversations(): Promise<{ code: number; msg: string; data: ConversationInfo[] }> {
+  return fetch('/chat/conversations', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  }).then((r) => r.json())
+}
+
+export function getConversation(conversationId: string): Promise<{ code: number; msg: string; data: ConversationDetail }> {
+  return fetch(`/chat/conversations/${conversationId}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  }).then((r) => r.json())
+}
+
+export function deleteConversation(conversationId: string): Promise<{ code: number; msg: string; data: unknown }> {
+  return fetch(`/chat/conversations/${conversationId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  }).then((r) => r.json())
+}
+
 export function chatFeedback(messageId: string, rating: number): Promise<unknown> {
   return fetch('/chat/feedback', {
     method: 'POST',

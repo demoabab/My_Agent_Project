@@ -9,6 +9,7 @@ function genId(): string {
 export function useChat() {
   const messages = ref<ChatMessage[]>([])
   const streamingContent = ref('')
+  const thinkingContent = ref('')  // Agent intermediate reasoning (collapsible)
   const streamDocs = ref<string[]>([])
   const streamToolCalls = ref<ToolCall[]>([])
   const streamStatus = ref(-1)
@@ -18,6 +19,7 @@ export function useChat() {
   const error = ref('')
   const conversationId = ref(localStorage.getItem('current_conv_id') || '')
   const currentMode = ref<'kb' | 'llm'>('kb')
+  let lastToolCallIdx = 0  // Track when tool calls happen for thinking/answer separation
 
   const currentThinking = computed(() => {
     switch (streamStatus.value) {
@@ -52,6 +54,15 @@ export function useChat() {
       streamDocs.value = chunk.docs
     }
 
+    // When new tool calls appear, move current answer text to thinking
+    const hasNewToolCalls = (chunk.choices?.[0]?.delta?.tool_calls?.length || chunk.tool_calls?.length || 0) > 0
+    const isToolStart = chunk.status === 4 || chunk.status === 7
+    if ((hasNewToolCalls || isToolStart) && streamingContent.value) {
+      if (thinkingContent.value) thinkingContent.value += '\n\n'
+      thinkingContent.value += streamingContent.value
+      streamingContent.value = ''
+    }
+
     // Capture tool calls from choices
     if (chunk.choices?.[0]?.delta?.tool_calls?.length) {
       for (const tc of chunk.choices[0].delta.tool_calls as unknown as ToolCall[]) {
@@ -80,23 +91,47 @@ export function useChat() {
       }
     }
 
-    // Streaming text content
+    // Streaming text content (with dedup: skip if new text is already contained)
     const text = chunk.choices?.[0]?.delta?.content || ''
     if (text) {
-      streamingContent.value += text
+      const combined = streamingContent.value + text
+      // Check if the new text would create a repetition pattern
+      if (!isRepeating(streamingContent.value, text)) {
+        streamingContent.value = combined
+      }
     }
 
     scrollToBottom()
   }
 
+  // Detect if appending `addition` to `base` creates repetition
+  function isRepeating(base: string, addition: string): boolean {
+    if (!addition || base.length === 0) return false
+    // If addition content is already fully contained in base, skip
+    if (base.includes(addition)) return true
+    // Check for sentence-level repetition: last N chars of base vs first N chars of addition
+    const checkLen = Math.min(addition.length, 100)
+    if (checkLen < 20) return false
+    const tail = base.slice(-checkLen)
+    const head = addition.slice(0, checkLen)
+    return tail === head
+  }
+
   function finishStream() {
+    // If there's thinking content and no streaming content, promote thinking to answer
+    const answer = streamingContent.value || thinkingContent.value
+    const thinking = thinkingContent.value && streamingContent.value ? thinkingContent.value : ''
+
     const finalMsg: ChatMessage = {
       role: 'assistant',
-      content: streamingContent.value,
+      content: answer,
       timestamp: Date.now(),
       is_ref: false,
     }
 
+    if (thinking) {
+      finalMsg.thinking = thinking
+    }
     if (streamDocs.value.length > 0) {
       finalMsg.docs = [...streamDocs.value]
     }
@@ -105,11 +140,12 @@ export function useChat() {
     }
     finalMsg.status = streamStatus.value
 
-    if (finalMsg.content || finalMsg.tool_calls?.length) {
+    if (finalMsg.content || finalMsg.tool_calls?.length || finalMsg.thinking) {
       messages.value.push(finalMsg)
     }
 
     streamingContent.value = ''
+    thinkingContent.value = ''
     streamDocs.value = []
     streamToolCalls.value = []
     streamStatus.value = -1
@@ -132,6 +168,7 @@ export function useChat() {
     conversationId.value = genId()
     localStorage.setItem('current_conv_id', conversationId.value)
     messages.value = []
+    thinkingContent.value = ''
     persistSession()
   }
 
@@ -215,6 +252,7 @@ export function useChat() {
 
     isStreaming.value = true
     streamingContent.value = ''
+    thinkingContent.value = ''
     streamDocs.value = []
     streamToolCalls.value = []
     streamStatus.value = -1
@@ -258,6 +296,7 @@ export function useChat() {
 
     isStreaming.value = true
     streamingContent.value = ''
+    thinkingContent.value = ''
     streamDocs.value = []
     streamToolCalls.value = []
     streamStatus.value = -1
@@ -297,6 +336,7 @@ export function useChat() {
 
     isStreaming.value = true
     streamingContent.value = ''
+    thinkingContent.value = ''
     streamDocs.value = []
     streamToolCalls.value = []
     streamStatus.value = -1
@@ -322,6 +362,7 @@ export function useChat() {
   function clearMessages() {
     messages.value = []
     streamingContent.value = ''
+    thinkingContent.value = ''
     streamDocs.value = []
     streamToolCalls.value = []
     streamStatus.value = -1
@@ -333,6 +374,7 @@ export function useChat() {
   return {
     messages,
     streamingContent,
+    thinkingContent,
     streamDocs,
     streamToolCalls,
     streamStatus,

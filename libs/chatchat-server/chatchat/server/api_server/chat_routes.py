@@ -2,17 +2,26 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from langchain.prompts.prompt import PromptTemplate
 from sse_starlette import EventSourceResponse
 
 from chatchat.server.api_server.api_schemas import OpenAIChatInput
+from chatchat.server.auth.dependencies import get_current_user
 from chatchat.server.chat.chat import chat
 from chatchat.server.chat.kb_chat import kb_chat
 from chatchat.server.chat.feedback import chat_feedback
 from chatchat.server.chat.file_chat import file_chat
-from chatchat.server.db.repository import add_message_to_db
+from chatchat.server.db.repository import (
+    add_message_to_db,
+    add_conversation_to_db,
+    list_conversations_from_db,
+    get_conversation_from_db,
+    delete_conversation_from_db,
+    filter_message,
+)
 from chatchat.server.utils import (
+    BaseResponse,
     get_OpenAIClient,
     get_prompt_template,
     get_tool,
@@ -123,3 +132,31 @@ async def chat_completions(
         max_tokens=body.max_tokens,
     )
     return result
+
+
+# ===== Conversation history endpoints =====
+
+@chat_router.get("/conversations", summary="获取对话历史列表")
+def list_conversations(current_user: dict = Depends(get_current_user)):
+    tenant_id = current_user.get("tenant_id")
+    conversations = list_conversations_from_db(tenant_id=tenant_id)
+    return BaseResponse.success(conversations)
+
+
+@chat_router.get("/conversations/{conversation_id}", summary="获取对话消息")
+def get_conversation(conversation_id: str, current_user: dict = Depends(get_current_user)):
+    conv = get_conversation_from_db(conversation_id)
+    if conv is None:
+        return BaseResponse.error("对话不存在")
+    messages = filter_message(conversation_id=conversation_id, limit=200)
+    messages = list(reversed(messages))
+    return BaseResponse.success({
+        "conversation": conv,
+        "messages": messages,
+    })
+
+
+@chat_router.delete("/conversations/{conversation_id}", summary="删除对话")
+def delete_conversation(conversation_id: str, current_user: dict = Depends(get_current_user)):
+    delete_conversation_from_db(conversation_id)
+    return BaseResponse.success({"deleted": conversation_id})

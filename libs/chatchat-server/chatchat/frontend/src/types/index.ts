@@ -100,6 +100,7 @@ export interface ChatMessage {
   tool_calls?: ToolCall[]
   docs?: string[]
   status?: number
+  thinking?: string
 }
 
 export interface ChatRequest {

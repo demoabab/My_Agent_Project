@@ -1,34 +1,35 @@
 <template>
   <div class="user-list-page">
-    <el-card>
-      <template #header>
-        <span>用户管理</span>
-      </template>
+    <div class="page-toolbar">
+      <h3 class="page-title">用户管理</h3>
+    </div>
 
+    <el-card shadow="never" class="content-card">
       <el-table :data="users" v-loading="loading" stripe>
         <el-table-column prop="username" label="用户名" width="160" />
         <el-table-column prop="email" label="邮箱" min-width="200" show-overflow-tooltip />
         <el-table-column prop="full_name" label="姓名" width="120" />
-        <el-table-column label="状态" width="100">
+        <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.is_active ? 'success' : 'danger'" size="small">
+            <el-tag :type="row.is_active ? 'success' : 'danger'" size="small" effect="plain">
               {{ row.is_active ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="超级管理员" width="120">
+        <el-table-column label="超级管理员" width="120" align="center">
           <template #default="{ row }">
-            <el-tag v-if="row.is_superuser" type="warning" size="small">是</el-tag>
+            <el-tag v-if="row.is_superuser" type="warning" size="small" effect="plain">是</el-tag>
             <span v-else style="color: #909399">否</span>
           </template>
         </el-table-column>
         <el-table-column prop="create_time" label="创建时间" width="180" />
-        <el-table-column label="操作" width="120">
+        <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="!row.is_superuser"
               link
               :type="row.is_active ? 'danger' : 'success'"
+              size="small"
               @click="toggleStatus(row as unknown as UserRecord)"
             >
               {{ row.is_active ? '禁用' : '启用' }}
@@ -84,3 +85,14 @@ async function toggleStatus(user: UserRecord) {
 
 onMounted(fetchUsers)
 </script>
+
+<style scoped>
+.user-list-page { max-width: 960px; }
+.page-toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
+}
+.page-title { margin: 0; font-size: 18px; font-weight: 600; color: #303133; }
+
+.content-card { border: 1px solid #ebeef5; border-radius: 8px; }
+</style>

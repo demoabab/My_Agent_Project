@@ -8,12 +8,11 @@
       </el-page-header>
     </div>
 
-    <el-card>
+    <el-card shadow="never" class="content-card">
       <template #header>
         <div class="card-header">
-          <span>成员列表</span>
-          <el-button type="primary" size="small" @click="showAddDialog = true">
-            <el-icon><Plus /></el-icon>
+          <span class="card-title">成员列表</span>
+          <el-button type="primary" size="small" :icon="Plus" @click="showAddDialog = true">
             添加成员
           </el-button>
         </div>
@@ -22,22 +21,23 @@
       <el-table :data="members" v-loading="loading" stripe>
         <el-table-column prop="user_id" label="用户ID" width="280" show-overflow-tooltip />
         <el-table-column prop="username" label="用户名" width="160" />
-        <el-table-column label="角色" width="120">
+        <el-table-column label="角色" width="120" align="center">
           <template #default="{ row }">
-            <el-tag :type="roleType(row.role)" size="small">
+            <el-tag :type="roleType(row.role)" size="small" effect="plain">
               {{ roleLabel(row.role) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120">
+        <el-table-column label="操作" width="120" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button link type="danger" @click="handleRemove(row.user_id)">移除</el-button>
+            <el-button link type="danger" size="small" @click="handleRemove(row.user_id)">移除</el-button>
           </template>
         </el-table-column>
       </el-table>
+
+      <el-empty v-if="!loading && members.length === 0" description="暂无成员" />
     </el-card>
 
-    <!-- Add Member Dialog -->
     <el-dialog v-model="showAddDialog" title="添加成员" width="450px">
       <el-form ref="addFormRef" :model="addForm" :rules="addRules" label-width="80px">
         <el-form-item label="用户ID" prop="user_id">
@@ -63,6 +63,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { getMembers, addMember, removeMember } from '@/api/tenant'
 import type { TenantMember } from '@/types'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -135,7 +136,9 @@ function roleLabel(role: string): string {
 }
 
 function roleType(role: string): 'primary' | 'success' | 'warning' | 'info' | 'danger' {
-  const map: Record<string, 'primary' | 'success' | 'warning' | 'info' | 'danger'> = { admin: 'danger', member: 'primary', viewer: 'info' }
+  const map: Record<string, 'primary' | 'success' | 'warning' | 'info' | 'danger'> = {
+    admin: 'danger', member: 'primary', viewer: 'info'
+  }
   return map[role] || 'info'
 }
 
@@ -143,19 +146,14 @@ onMounted(fetchMembers)
 </script>
 
 <style scoped>
+.tenant-detail-page { max-width: 960px; }
 .page-header {
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: #fff;
-  border-radius: 4px;
+  margin-bottom: 16px; padding: 12px 20px;
+  background: #fff; border-radius: 8px; border: 1px solid #ebeef5;
 }
-.tenant-title {
-  font-size: 18px;
-  font-weight: bold;
-}
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+.tenant-title { font-size: 18px; font-weight: 700; }
+
+.content-card { border: 1px solid #ebeef5; border-radius: 8px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-title { font-size: 14px; font-weight: 600; }
 </style>
