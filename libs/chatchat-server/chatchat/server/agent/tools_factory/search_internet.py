@@ -25,7 +25,12 @@ def searx_search(text ,config, top_k: int):
         categories=config["categories"],
     )
     search.params["language"] = config.get("language", "zh-CN")
-    return search.results(text, top_k)
+    try:
+        return search.results(text, top_k)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"searx search failed at {config['host']}: {e}")
+        return []
 
 
 def bing_search(text, config, top_k:int):

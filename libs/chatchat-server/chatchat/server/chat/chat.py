@@ -4,7 +4,7 @@ import uuid
 import os
 from chatchat.server.db.repository.message_repository import filter_message
 from typing import AsyncIterable, List, Union, Tuple
-from langchain_core.load import dumpd, dumps, load, loads
+from langchain_core.load import dumps
 
 from fastapi import Body
 from langchain.chains import LLMChain
@@ -88,7 +88,8 @@ def create_models_chains(
         history.append({"role": "user", "content": message["query"]}) 
         history.append({"role": "assistant", "content":  message["response"]})  
 
-    intermediate_steps = loads(messages[-1].get("metadata", {}).get("intermediate_steps"), valid_namespaces=["langchain_chatchat", "agent_toolkits", "all_tools", "tool"] )  if len(messages)>0 and messages[-1].get("metadata") is not None else []
+    # 每个新问题是独立的Agent任务，不加载上一轮的中间执行状态，避免上下文污染
+    intermediate_steps = []
     llm = models["action_model"]
     llm.callbacks = callbacks
     connections = get_enabled_mcp_connections()
@@ -291,9 +292,20 @@ async def chat(
 
             string_intermediate_steps = dumps(agent_executor.intermediate_steps, pretty=True)
 
+            # 安全提取最后一条 assistant 消息作为 response（失败时 content 可能为 dict）
+            last_response = ""
+            for h in reversed(agent_executor.history):
+                if isinstance(h, dict) and h.get("role") == "assistant":
+                    content = h.get("content", "")
+                    last_response = content if isinstance(content, str) else str(content)
+                    if last_response:
+                        break
+            if not last_response:
+                last_response = "（Agent 执行异常，未生成回复）"
+
             update_message(
-                message_id, 
-                agent_executor.history[-1].get("content"),
+                message_id,
+                last_response,
                 metadata = {
                     "intermediate_steps": string_intermediate_steps
                 }
@@ -303,8 +315,9 @@ async def chat(
             logger.warning("streaming progress has been interrupted by user.")
             return
         except Exception as e:
-            logger.error(f"error in chat: {e}")
-            yield {"data": json.dumps({"error": str(e)})}
+            import traceback
+            logger.error(f"error in chat: {e}" + chr(10) + traceback.format_exc())
+            yield {"data": json.dumps({"error": str(e), "traceback": traceback.format_exc()})}
             return
 
     if stream:

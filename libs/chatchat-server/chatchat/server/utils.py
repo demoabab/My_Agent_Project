@@ -475,6 +475,14 @@ class BaseResponse(BaseModel):
             }
         }
 
+    @classmethod
+    def success(cls, data: Any = "", message: str = "success"):
+        return cls(code=200, msg=message, data=data)
+
+    @classmethod
+    def error(cls, data: Any = "", message: str = "error", code: int = 500):
+        return cls(code=code, msg=message, data=data)
+
 
 class ListResponse(BaseResponse):
     data: List[Any] = Field(..., description="List of data")

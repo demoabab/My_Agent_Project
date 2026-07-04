@@ -214,6 +214,7 @@ def agents_registry(
             verbose=verbose,
             callbacks=callbacks,
             return_intermediate_steps=True,
+            max_iterations=6,
         )
         return agent_executor
 

@@ -370,9 +370,10 @@ class PlatformToolsRunnable(RunnableSerializable[Dict, OutputType]):
 
             # if self.callback.out:
             self.history.append({"role": "user", "content": chat_input})
-            self.history.append(
-                {"role": "assistant", "content": self.callback.outputs["output"]}
-            )
+            if self.callback.outputs and "output" in self.callback.outputs:
+                self.history.append(
+                    {"role": "assistant", "content": self.callback.outputs["output"]}
+                )
             self.intermediate_steps.extend(self.callback.intermediate_steps)
 
         return chat_iterator()
