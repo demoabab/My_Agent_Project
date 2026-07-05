@@ -33,7 +33,7 @@ class PlatformToolsBaseComponent(BaseModel):
         """Get class name."""
 
     def to_dict(self, **kwargs: Any) -> Dict[str, Any]:
-        data = self.dict(**kwargs)
+        data = self.model_dump(**kwargs) if PYDANTIC_V2 else self.dict(**kwargs)
         data["class_name"] = self.class_name()
         return data
 

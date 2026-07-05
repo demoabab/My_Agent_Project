@@ -158,7 +158,7 @@ def _generate_report(topic, internet, wiki, web_contents):
         return fallback, False
 
 
-@regist_tool(title="深度调研", description="对任意主题进行深度调研。自动编排搜索->抓取->分析流程，生成结构化调研报告（含概述/关键信息/深度分析/来源）。每步执行状态透明可追踪。")
+@regist_tool(title="深度调研", description="对任意主题进行深度调研。自动执行搜索→抓取→分析流程（内部使用search_internet和百度百科搜索），生成包含概述、关键信息、深度分析和来源引用的结构化调研报告。直接返回Markdown格式报告，无需MCP服务器。")
 def research_skill(
     topic: str = Field(description="需要调研的主题或问题，越具体越好"),
 ):
@@ -264,18 +264,18 @@ def research_skill(
     total_ms = _now_ms() - t_start
     logger.info(f"[research_skill] ========== 调研完成 ({total_ms}ms) | 4/4 步骤 | 主题: {topic} ==========")
 
-    return BaseToolOutput({
-        "topic": topic,
-        "report": report,
-        "sources": urls,
-        "execution_trace": {
-            "total_steps": 4,
-            "total_duration_ms": total_ms,
-            "steps": steps,
-        },
-        "search_details": {
-            "internet_search_status": "success" if internet_ok else "failed",
-            "baidu_baike_search_status": "success" if baike_ok else "not_found",
-            "web_pages_fetched": len(web_parts),
-        }
-    }, format="json")
+    # 直接返回 Markdown 报告文本，Agent 看到的就是可展示的报告内容
+    summary = f"\n> 调研耗时 {total_ms/1000:.1f}s | 搜索: {'OK' if internet_ok else 'FAIL'} | 百科: {'OK' if baike_ok else 'NONE'} | 抓取页面: {len(web_parts)}/{len(urls)}"
+
+    output = f"""## 调研报告: {topic}
+
+{report}
+
+---
+### 信息来源
+{chr(10).join(f'- {u}' for u in urls) if urls else '（未提取到有效URL）'}
+{summary}"""
+
+    logger.info(f"[research_skill] ========== 调研完成 ({total_ms}ms) | 报告 {len(report)}字 | 来源 {len(urls)}个 ==========")
+
+    return output
