@@ -17,11 +17,13 @@ export function getMembers(tenantId: string): Promise<TenantMember[]> {
 
 export function addMember(
   tenantId: string,
-  userId: string,
+  userId?: string,
+  username?: string,
   role = 'member'
 ): Promise<{ message: string }> {
   const params = new URLSearchParams()
-  params.append('user_id', userId)
+  if (userId) params.append('user_id', userId)
+  if (username) params.append('username', username)
   params.append('role', role)
   return client.post(`/api/v1/tenants/${tenantId}/members`, params).then((r) => r.data)
 }

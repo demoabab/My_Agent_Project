@@ -103,8 +103,9 @@ async function handleCreate() {
     showCreateDialog.value = false
     createForm.value = { knowledge_base_name: '', vector_store_type: 'faiss', embed_model: '' }
     await fetchList()
-  } catch {
-    ElMessage.error('创建失败')
+  } catch (err: any) {
+    const detail = err?.response?.data?.detail
+    ElMessage.error(typeof detail === 'string' ? detail : '创建失败')
   } finally {
     creating.value = false
   }

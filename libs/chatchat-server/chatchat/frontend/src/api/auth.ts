@@ -25,3 +25,9 @@ export function register(
 export function getMe(): Promise<MeResponse> {
   return client.get('/api/v1/auth/me').then((r) => r.data)
 }
+
+export function switchTenant(tenantId: string): Promise<LoginResponse> {
+  const params = new URLSearchParams()
+  params.append('tenant_id', tenantId)
+  return client.post('/api/v1/auth/switch-tenant', params).then((r) => r.data)
+}

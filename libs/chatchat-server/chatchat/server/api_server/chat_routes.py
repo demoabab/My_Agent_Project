@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from langchain.prompts.prompt import PromptTemplate
 from sse_starlette import EventSourceResponse
 
@@ -55,6 +55,7 @@ chat_router.post("/file_chat", summary="文件对话")(file_chat)
 async def chat_completions(
     request: Request,
     body: OpenAIChatInput,
+    current_user: dict = Depends(get_current_user),
 ) -> Dict:
     """
     请求参数与 openai.chat.completions.create 一致，可以通过 extra_body 传入额外参数
@@ -138,7 +139,7 @@ async def chat_completions(
 
 @chat_router.get("/conversations", summary="获取对话历史列表")
 def list_conversations(current_user: dict = Depends(get_current_user)):
-    tenant_id = current_user.get("tenant_id")
+    tenant_id = current_user.get("tenant_id") if isinstance(current_user, dict) else None
     conversations = list_conversations_from_db(tenant_id=tenant_id)
     return BaseResponse.success(conversations)
 

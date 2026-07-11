@@ -4,7 +4,7 @@ import asyncio, json
 import uuid
 from typing import AsyncIterable, List, Optional, Literal
 
-from fastapi import Body, Request
+from fastapi import Body, Depends, Request
 from fastapi.concurrency import run_in_threadpool
 from sse_starlette.sse import EventSourceResponse
 from langchain.callbacks import AsyncIteratorCallbackHandler
@@ -14,6 +14,7 @@ from langchain.prompts.chat import ChatPromptTemplate
 from chatchat.settings import Settings
 from chatchat.server.agent.tools_factory.search_internet import search_engine
 from chatchat.server.api_server.api_schemas import OpenAIChatOutput
+from chatchat.server.auth.dependencies import get_current_user
 from chatchat.server.chat.utils import History
 from chatchat.server.knowledge_base.kb_service.base import KBServiceFactory
 from chatchat.server.knowledge_base.kb_doc_api import search_docs, search_temp_docs
@@ -63,9 +64,10 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
                 return_direct: bool = Body(False, description="直接返回检索结果，不送入 LLM"),
                 conversation_id: str = Body("", description="对话框ID"),
                 request: Request = None,
+                current_user: dict = Depends(get_current_user),
                 ):
     if mode == "local_kb":
-        kb = KBServiceFactory.get_service_by_name(kb_name)
+        kb = KBServiceFactory.get_service_by_name(kb_name, tenant_id=current_user.get("tenant_id") if isinstance(current_user, dict) else None)
         if kb is None:
             return BaseResponse(code=404, msg=f"未找到知识库 {kb_name}")
 
@@ -91,7 +93,7 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
             history = [History.from_data(h) for h in history]
 
             if mode == "local_kb":
-                kb = KBServiceFactory.get_service_by_name(kb_name)
+                kb = KBServiceFactory.get_service_by_name(kb_name, tenant_id=current_user.get("tenant_id") if isinstance(current_user, dict) else None)
                 ok, msg = kb.check_embed_model()
                 if not ok:
                     raise ValueError(msg)
@@ -101,7 +103,8 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
                                                 top_k=top_k,
                                                 score_threshold=score_threshold,
                                                 file_name="",
-                                                metadata={})
+                                                metadata={},
+                                                current_user=current_user)
                 source_documents = format_reference(kb_name, docs, api_address(is_public=True))
             elif mode == "temp_kb":
                 ok, msg = check_embed_model()
@@ -111,7 +114,8 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
                                                 kb_name,
                                                 query=query,
                                                 top_k=top_k,
-                                                score_threshold=score_threshold)
+                                                score_threshold=score_threshold,
+                                                current_user=current_user)
                 source_documents = format_reference(kb_name, docs, api_address(is_public=True))
             elif mode == "search_engine":
                 result = await run_in_threadpool(search_engine, query, top_k, kb_name)

@@ -1,6 +1,7 @@
-from fastapi import Body
+from fastapi import Body, Depends
 
 from chatchat.utils import build_logger
+from chatchat.server.auth.dependencies import require_permission
 from chatchat.server.db.repository import feedback_message_to_db
 from chatchat.server.utils import BaseResponse
 
@@ -11,6 +12,7 @@ def chat_feedback(
     message_id: str = Body("", max_length=32, description="聊天记录id"),
     score: int = Body(0, max=100, description="用户评分，满分100，越大表示评价越高"),
     reason: str = Body("", description="用户评分理由，比如不符合事实等"),
+    current_user: dict = Depends(require_permission("chat", "write")),
 ):
     try:
         feedback_message_to_db(message_id, score, reason)

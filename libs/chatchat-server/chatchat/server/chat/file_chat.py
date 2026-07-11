@@ -5,7 +5,9 @@ import os
 from typing import AsyncIterable, List, Optional
 
 import nest_asyncio
-from fastapi import Body, File, Form, UploadFile
+from fastapi import Body, Depends, File, Form, UploadFile
+
+from chatchat.server.auth.dependencies import get_current_user, require_permission
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.chains import LLMChain
 from langchain.prompts.chat import ChatPromptTemplate
@@ -79,6 +81,7 @@ def upload_temp_docs(
     chunk_size: int = Form(Settings.kb_settings.CHUNK_SIZE, description="知识库中单段文本最大长度"),
     chunk_overlap: int = Form(Settings.kb_settings.OVERLAP_SIZE, description="知识库中相邻文本重合长度"),
     zh_title_enhance: bool = Form(Settings.kb_settings.ZH_TITLE_ENHANCE, description="是否开启中文标题加强"),
+    current_user: dict = Depends(require_permission("knowledge_base", "write")),
 ) -> BaseResponse:
     """
     将文件保存到临时目录，并进行向量化。
@@ -140,6 +143,7 @@ async def file_chat(
         "default",
         description="使用的prompt模板名称(在 prompt_settings.yaml 中配置)",
     ),
+    current_user: dict = Depends(get_current_user),
 ):
     if knowledge_id not in memo_faiss_pool.keys():
         # return BaseResponse(code=404, msg=f"未找到临时知识库 {knowledge_id}，请先上传文件")

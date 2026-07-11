@@ -139,4 +139,10 @@ def seed_all():
         tenant_id = _ensure_tenant(session, DEFAULT_TENANT)
         _ensure_user_tenant(session, user_id, tenant_id, role="admin")
         _ensure_role_and_permissions(session, tenant_id)
+
+        # 确保所有已有租户都有角色权限
+        all_tenants = session.query(TenantModel).all()
+        for t in all_tenants:
+            _ensure_role_and_permissions(session, t.id)
+
         logger.success("Seed data initialization completed")

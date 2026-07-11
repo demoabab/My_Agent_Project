@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { listTenants } from '@/api/tenant'
+import { switchTenant as switchTenantApi } from '@/api/auth'
+import { useAuthStore } from '@/stores/auth'
 import type { UserTenant } from '@/types'
 
 export const useTenantStore = defineStore('tenant', () => {
@@ -30,7 +32,14 @@ export const useTenantStore = defineStore('tenant', () => {
     }
   }
 
-  function switchTenant(tenantId: string) {
+  async function switchTenant(tenantId: string) {
+    const auth = useAuthStore()
+    try {
+      const res = await switchTenantApi(tenantId)
+      auth.token = res.access_token
+    } catch {
+      // API call failed — fall back to local-only switch
+    }
     currentTenantId.value = tenantId
   }
 

@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import List, Literal
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 
 from chatchat.settings import Settings
+from chatchat.server.auth.dependencies import get_current_user
 from chatchat.server.api_server.api_schemas import OpenAIChatInput, OpenAIChatOutput
 from chatchat.server.chat.file_chat import upload_temp_docs
 from chatchat.server.chat.kb_chat import kb_chat
@@ -40,6 +41,7 @@ async def kb_chat_endpoint(
     param: str,
     body: OpenAIChatInput,
     request: Request,
+    current_user: dict = Depends(get_current_user),
 ):
     # import rich
     # rich.print(body)
@@ -61,7 +63,9 @@ async def kb_chat_endpoint(
         max_tokens=body.max_tokens,
         prompt_name=extra.get("prompt_name", "default"),
         return_direct=extra.get("return_direct", False),
+        conversation_id=extra.get("conversation_id", ""),
         request=request,
+        current_user=current_user,
     )
     return ret
 

@@ -40,8 +40,8 @@
 
     <el-dialog v-model="showAddDialog" title="添加成员" width="450px">
       <el-form ref="addFormRef" :model="addForm" :rules="addRules" label-width="80px">
-        <el-form-item label="用户ID" prop="user_id">
-          <el-input v-model="addForm.user_id" placeholder="请输入用户ID" />
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="addForm.username" placeholder="请输入用户名" />
         </el-form-item>
         <el-form-item label="角色" prop="role">
           <el-select v-model="addForm.role" style="width: 100%">
@@ -76,10 +76,10 @@ const loading = ref(false)
 const showAddDialog = ref(false)
 const adding = ref(false)
 const addFormRef = ref<FormInstance>()
-const addForm = ref({ user_id: '', role: 'member' })
+const addForm = ref({ username: '', role: 'member' })
 
 const addRules: FormRules = {
-  user_id: [{ required: true, message: '请输入用户ID', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   role: [{ required: true, message: '请选择角色', trigger: 'change' }],
 }
 
@@ -99,13 +99,14 @@ async function handleAdd() {
   if (!valid) return
   adding.value = true
   try {
-    await addMember(tenantId, addForm.value.user_id, addForm.value.role)
+    await addMember(tenantId, undefined, addForm.value.username, addForm.value.role)
     ElMessage.success('成员添加成功')
     showAddDialog.value = false
-    addForm.value = { user_id: '', role: 'member' }
+    addForm.value = { username: '', role: 'member' }
     await fetchMembers()
-  } catch {
-    ElMessage.error('添加失败')
+  } catch (err: any) {
+    const detail = err?.response?.data?.detail
+    ElMessage.error(typeof detail === 'string' ? detail : '添加失败')
   } finally {
     adding.value = false
   }

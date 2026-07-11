@@ -2,6 +2,7 @@ import uuid
 from typing import List, Optional
 
 from chatchat.server.db.models.tenant_model import TenantModel
+from chatchat.server.db.models.user_model import UserModel
 from chatchat.server.db.models.user_tenant import UserTenantModel
 from chatchat.server.db.session import with_session
 
@@ -38,11 +39,12 @@ def list_tenants(session) -> List[TenantModel]:
 @with_session
 def list_tenant_members(session, tenant_id: str) -> List[dict]:
     results = (
-        session.query(UserTenantModel)
+        session.query(UserTenantModel, UserModel.username)
+        .join(UserModel, UserTenantModel.user_id == UserModel.id)
         .filter(UserTenantModel.tenant_id == tenant_id)
         .all()
     )
-    return [{"user_id": ut.user_id, "role": ut.role} for ut in results]
+    return [{"user_id": ut.user_id, "username": username or "", "role": ut.role} for ut, username in results]
 
 
 @with_session

@@ -74,7 +74,7 @@
           <el-dropdown trigger="click">
             <div class="user-badge">
               <el-avatar :size="28" icon="UserFilled" />
-              <span class="user-name">{{ auth.user?.username || '用户' }}</span>
+              <span class="user-name">{{ auth.user?.username || '用户' }}<span class="user-tenant-tag">@{{ currentTenantName }}</span></span>
               <el-icon class="arrow-icon"><ArrowDown /></el-icon>
             </div>
             <template #dropdown>
@@ -84,7 +84,10 @@
                     <el-avatar :size="32" icon="UserFilled" />
                     <div>
                       <div class="dropdown-username">{{ auth.user?.username }}</div>
-                      <div class="dropdown-role">{{ auth.isSuperuser ? '超级管理员' : '用户' }}</div>
+                      <div class="dropdown-role">
+                        {{ auth.isSuperuser ? '超级管理员' : currentTenantRole }}
+                        <span v-if="!auth.isSuperuser" class="dropdown-tenant"> · {{ currentTenantName }}</span>
+                      </div>
                     </div>
                   </div>
                 </el-dropdown-item>
@@ -111,11 +114,23 @@ import { useRoute } from 'vue-router'
 import { Expand, Fold, SwitchButton, ArrowDown } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useSettingsStore } from '@/stores/settings'
+import { useTenantStore } from '@/stores/tenant'
 import TenantSwitcher from './TenantSwitcher.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
 const settings = useSettingsStore()
+const tenant = useTenantStore()
+
+const currentTenantName = computed(() => {
+  const t = tenant.tenants.find((x) => x.tenant_id === tenant.currentTenantId)
+  return t?.tenant_name || '未选择'
+})
+const currentTenantRole = computed(() => {
+  const t = tenant.tenants.find((x) => x.tenant_id === tenant.currentTenantId)
+  const map: Record<string, string> = { admin: '管理员', member: '成员', viewer: '查看者' }
+  return map[t?.role || ''] || '无角色'
+})
 
 const sidebarCollapsed = computed(() => settings.sidebarCollapsed)
 const activeMenu = computed(() => {
@@ -183,6 +198,7 @@ const activeMenu = computed(() => {
 }
 .user-badge:hover { background: #f5f7fa; }
 .user-name { font-size: 13px; color: #303133; }
+.user-tenant-tag { color: #909399; font-weight: 400; }
 .arrow-icon { font-size: 12px; color: #909399; transition: transform 0.2s; }
 
 .dropdown-user-info {
@@ -190,6 +206,7 @@ const activeMenu = computed(() => {
 }
 .dropdown-username { font-size: 14px; font-weight: 600; color: #303133; }
 .dropdown-role { font-size: 12px; color: #909399; margin-top: 2px; }
+.dropdown-tenant { color: #409EFF; }
 
 /* ---- Main ---- */
 .app-main {

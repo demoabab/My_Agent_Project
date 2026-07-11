@@ -8,7 +8,12 @@ from chatchat.server.db.repository.tenant_repository import (
     list_tenant_members,
     remove_user_from_tenant,
 )
-from chatchat.server.db.repository.user_repository import add_user_to_tenant, get_user_tenants
+from chatchat.server.db.repository.user_repository import (
+    add_user_to_tenant,
+    get_user_tenants,
+    get_user_by_username,
+    get_user_by_id,
+)
 
 tenant_router = APIRouter(prefix="/api/v1/tenants", tags=["Tenants"])
 
@@ -23,8 +28,13 @@ def create_tenant(
     name: str = Form(),
     current_user: dict = Depends(require_permission("tenant", "write")),
 ):
+    from chatchat.server.db.seed import _ensure_role_and_permissions
+    from chatchat.server.db.session import session_scope
+
     tenant_id = repo_create_tenant(name=name)
     add_user_to_tenant(current_user["user_id"], tenant_id, role="admin")
+    with session_scope() as session:
+        _ensure_role_and_permissions(session, tenant_id)
     return {"tenant_id": tenant_id, "name": name}
 
 
@@ -39,10 +49,22 @@ def get_members(
 @tenant_router.post("/{tenant_id}/members")
 def add_member(
     tenant_id: str,
-    user_id: str = Form(),
+    user_id: str = Form(""),
+    username: str = Form(""),
     role: str = Form("member"),
     current_user: dict = Depends(require_permission("tenant", "write")),
 ):
+    if username:
+        user = get_user_by_username(username)
+        if not user:
+            raise HTTPException(status_code=404, detail=f"用户 '{username}' 不存在")
+        user_id = user["id"]
+    elif user_id:
+        if not get_user_by_id(user_id):
+            raise HTTPException(status_code=404, detail=f"用户 '{user_id}' 不存在")
+    else:
+        raise HTTPException(status_code=400, detail="请提供 username 或 user_id")
+
     add_user_to_tenant(user_id, tenant_id, role=role)
     return {"message": "Member added"}
 

@@ -93,6 +93,28 @@ def me(current_user: dict = Depends(get_current_user)):
     }
 
 
+@auth_router.post("/switch-tenant")
+def switch_tenant(
+    tenant_id: str = Form(),
+    current_user: dict = Depends(get_current_user),
+):
+    tenants = get_user_tenants(current_user["user_id"])
+    if not any(t["tenant_id"] == tenant_id for t in tenants):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not a member of this tenant",
+        )
+
+    token = create_access_token(
+        data={"sub": current_user["user_id"], "tenant_id": tenant_id}
+    )
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "tenant_id": tenant_id,
+    }
+
+
 @auth_router.get("/users")
 def list_users(
     limit: int = 100,

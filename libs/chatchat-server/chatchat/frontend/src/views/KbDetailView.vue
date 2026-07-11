@@ -140,8 +140,9 @@ async function handleUpload(options: { file: File }) {
     await uploadDocs(kbName, [options.file])
     ElMessage.success('文件上传成功')
     await fetchFiles()
-  } catch {
-    ElMessage.error('文件上传失败')
+  } catch (err: any) {
+    const detail = err?.response?.data?.detail
+    ElMessage.error(typeof detail === 'string' ? detail : '文件上传失败')
   }
 }
 

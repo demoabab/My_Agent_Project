@@ -61,14 +61,16 @@ class KBService(ABC):
         knowledge_base_name: str,
         kb_info: str = None,
         embed_model: str = get_default_embedding(),
+        tenant_id: Optional[str] = None,
     ):
         self.kb_name = knowledge_base_name
         self.kb_info = kb_info or Settings.kb_settings.KB_INFO.get(
             knowledge_base_name, f"关于{knowledge_base_name}的知识库"
         )
         self.embed_model = embed_model
-        self.kb_path = get_kb_path(self.kb_name)
-        self.doc_path = get_doc_path(self.kb_name)
+        self.tenant_id = tenant_id
+        self.kb_path = get_kb_path(self.kb_name, tenant_id)
+        self.doc_path = get_doc_path(self.kb_name, tenant_id)
         self.do_init()
 
     def __repr__(self) -> str:
@@ -90,20 +92,20 @@ class KBService(ABC):
         if not os.path.exists(self.doc_path):
             os.makedirs(self.doc_path)
 
-        status = add_kb_to_db(
-            self.kb_name, self.kb_info, self.vs_type(), self.embed_model
+        add_kb_to_db(
+            self.kb_name, self.kb_info, self.vs_type(), self.embed_model,
+            tenant_id=self.tenant_id,
         )
 
-        if status:
-            self.do_create_kb()
-        return status
+        self.do_create_kb()
+        return True
 
     def clear_vs(self):
         """
         删除向量库中所有内容
         """
         self.do_clear_vs()
-        status = delete_files_from_db(self.kb_name)
+        status = delete_files_from_db(self.kb_name, tenant_id=self.tenant_id)
         return status
 
     def drop_kb(self):
@@ -111,7 +113,7 @@ class KBService(ABC):
         删除知识库
         """
         self.do_drop_kb()
-        status = delete_kb_from_db(self.kb_name)
+        status = delete_kb_from_db(self.kb_name, tenant_id=self.tenant_id)
         return status
 
     def add_doc(self, kb_file: KnowledgeFile, docs: List[Document] = [], **kwargs):
@@ -148,6 +150,7 @@ class KBService(ABC):
                 custom_docs=custom_docs,
                 docs_count=len(docs),
                 doc_infos=doc_infos,
+                tenant_id=self.tenant_id,
             )
         else:
             status = False
@@ -160,7 +163,7 @@ class KBService(ABC):
         从知识库删除文件
         """
         self.do_delete_doc(kb_file, **kwargs)
-        status = delete_file_from_db(kb_file)
+        status = delete_file_from_db(kb_file, tenant_id=self.tenant_id)
         if delete_content and os.path.exists(kb_file.filepath):
             os.remove(kb_file.filepath)
         return status
@@ -171,7 +174,8 @@ class KBService(ABC):
         """
         self.kb_info = kb_info
         status = add_kb_to_db(
-            self.kb_name, self.kb_info, self.vs_type(), self.embed_model
+            self.kb_name, self.kb_info, self.vs_type(), self.embed_model,
+            tenant_id=self.tenant_id,
         )
         return status
 
@@ -189,14 +193,15 @@ class KBService(ABC):
 
     def exist_doc(self, file_name: str):
         return file_exists_in_db(
-            KnowledgeFile(knowledge_base_name=self.kb_name, filename=file_name)
+            KnowledgeFile(knowledge_base_name=self.kb_name, filename=file_name, tenant_id=self.tenant_id),
+            tenant_id=self.tenant_id,
         )
 
     def list_files(self):
-        return list_files_from_db(self.kb_name)
+        return list_files_from_db(self.kb_name, tenant_id=self.tenant_id)
 
     def count_files(self):
-        return count_files_from_db(self.kb_name)
+        return count_files_from_db(self.kb_name, tenant_id=self.tenant_id)
 
     def search_docs(
         self,
@@ -242,7 +247,8 @@ class KBService(ABC):
         通过file_name或metadata检索Document
         """
         doc_infos = list_docs_from_db(
-            kb_name=self.kb_name, file_name=file_name, metadata=metadata
+            kb_name=self.kb_name, file_name=file_name, metadata=metadata,
+            tenant_id=self.tenant_id,
         )
         docs = []
         for x in doc_infos:
@@ -285,12 +291,12 @@ class KBService(ABC):
         return list(Settings.kb_settings.kbs_config.keys())
 
     @classmethod
-    def list_kbs(cls):
-        return list_kbs_from_db()
+    def list_kbs(cls, tenant_id: Optional[str] = None):
+        return list_kbs_from_db(tenant_id=tenant_id)
 
     def exists(self, kb_name: str = None):
         kb_name = kb_name or self.kb_name
-        return kb_exists(kb_name)
+        return kb_exists(kb_name, tenant_id=self.tenant_id)
 
     @abstractmethod
     def vs_type(self) -> str:
@@ -352,6 +358,7 @@ class KBServiceFactory:
         vector_store_type: Union[str, SupportedVSType],
         embed_model: str = get_default_embedding(),
         kb_info: str = None,
+        tenant_id: Optional[str] = None,
     ) -> KBService:
         if isinstance(vector_store_type, str):
             vector_store_type = getattr(SupportedVSType, vector_store_type.upper())
@@ -359,6 +366,7 @@ class KBServiceFactory:
             "knowledge_base_name": kb_name,
             "embed_model": embed_model,
             "kb_info": kb_info,
+            "tenant_id": tenant_id,
         }
         if SupportedVSType.FAISS == vector_store_type:
             from chatchat.server.knowledge_base.kb_service.faiss_kb_service import (
@@ -420,11 +428,11 @@ class KBServiceFactory:
             return DefaultKBService(kb_name)
 
     @staticmethod
-    def get_service_by_name(kb_name: str) -> KBService:
-        _, vs_type, embed_model = load_kb_from_db(kb_name)
+    def get_service_by_name(kb_name: str, tenant_id: Optional[str] = None) -> KBService:
+        _, vs_type, embed_model = load_kb_from_db(kb_name, tenant_id=tenant_id)
         if _ is None:  # kb not in db, just return None
             return None
-        return KBServiceFactory.get_service(kb_name, vs_type, embed_model)
+        return KBServiceFactory.get_service(kb_name, vs_type, embed_model, tenant_id=tenant_id)
 
     @staticmethod
     def get_default():
@@ -466,12 +474,12 @@ def get_kb_details() -> List[Dict]:
     return data
 
 
-def get_kb_file_details(kb_name: str) -> List[Dict]:
-    kb = KBServiceFactory.get_service_by_name(kb_name)
+def get_kb_file_details(kb_name: str, tenant_id: Optional[str] = None) -> List[Dict]:
+    kb = KBServiceFactory.get_service_by_name(kb_name, tenant_id=tenant_id)
     if kb is None:
         return []
 
-    files_in_folder = list_files_from_folder(kb_name)
+    files_in_folder = list_files_from_folder(kb_name, tenant_id=tenant_id)
     files_in_db = kb.list_files()
     result = {}
 
@@ -490,7 +498,7 @@ def get_kb_file_details(kb_name: str) -> List[Dict]:
         }
     lower_names = {x.lower(): x for x in result}
     for doc in files_in_db:
-        doc_detail = get_file_detail(kb_name, doc)
+        doc_detail = get_file_detail(kb_name, doc, tenant_id=tenant_id)
         if doc_detail:
             doc_detail["in_db"] = True
             if doc.lower() in lower_names:

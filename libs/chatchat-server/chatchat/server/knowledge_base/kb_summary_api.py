@@ -2,8 +2,10 @@ import asyncio
 import json
 from typing import List, Optional
 
-from fastapi import Body
+from fastapi import Body, Depends
 from sse_starlette import EventSourceResponse
+
+from chatchat.server.auth.dependencies import get_current_user, require_permission
 
 from chatchat.settings import Settings
 from chatchat.server.knowledge_base.kb_service.base import KBServiceFactory
@@ -28,6 +30,7 @@ def recreate_summary_vector_store(
     max_tokens: Optional[int] = Body(
         None, description="限制LLM生成Token数量，默认None代表模型最大值"
     ),
+    current_user: dict = Depends(require_permission("knowledge_base", "write")),
 ):
     """
     重建单个知识库文件摘要
@@ -46,7 +49,8 @@ def recreate_summary_vector_store(
 
     def output():
         try:
-            kb = KBServiceFactory.get_service(knowledge_base_name, vs_type, embed_model)
+            _tid = current_user.get("tenant_id") if isinstance(current_user, dict) else None
+            kb = KBServiceFactory.get_service(knowledge_base_name, vs_type, embed_model, tenant_id=_tid)
             if not kb.exists() and not allow_empty_kb:
                 yield {"code": 404, "msg": f"未找到知识库 ‘{knowledge_base_name}’"}
             else:
@@ -55,7 +59,7 @@ def recreate_summary_vector_store(
                     yield {"code": 404, "msg": msg}
                 else:
                     # 重新创建知识库
-                    kb_summary = KBSummaryService(knowledge_base_name, embed_model)
+                    kb_summary = KBSummaryService(knowledge_base_name, embed_model, tenant_id=_tid)
                     kb_summary.drop_kb_summary()
                     kb_summary.create_kb_summary()
 
@@ -75,7 +79,7 @@ def recreate_summary_vector_store(
                     summary = SummaryAdapter.form_summary(
                         llm=llm, reduce_llm=reduce_llm, overlap_size=Settings.kb_settings.OVERLAP_SIZE
                     )
-                    files = list_files_from_folder(knowledge_base_name)
+                    files = list_files_from_folder(knowledge_base_name, tenant_id=_tid)
 
                     i = 0
                     for i, file_name in enumerate(files):
@@ -128,6 +132,7 @@ def summary_file_to_vector_store(
     max_tokens: Optional[int] = Body(
         None, description="限制LLM生成Token数量，默认None代表模型最大值"
     ),
+    current_user: dict = Depends(require_permission("knowledge_base", "write")),
 ):
     """
     单个知识库根据文件名称摘要
@@ -145,12 +150,13 @@ def summary_file_to_vector_store(
 
     def output():
         try:
-            kb = KBServiceFactory.get_service(knowledge_base_name, vs_type, embed_model)
+            _tid = current_user.get("tenant_id") if isinstance(current_user, dict) else None
+            kb = KBServiceFactory.get_service(knowledge_base_name, vs_type, embed_model, tenant_id=_tid)
             if not kb.exists() and not allow_empty_kb:
                 yield {"code": 404, "msg": f"未找到知识库 ‘{knowledge_base_name}’"}
             else:
                 # 重新创建知识库
-                kb_summary = KBSummaryService(knowledge_base_name, embed_model)
+                kb_summary = KBSummaryService(knowledge_base_name, embed_model, tenant_id=_tid)
                 kb_summary.create_kb_summary()
 
                 llm = get_ChatOpenAI(
@@ -211,6 +217,7 @@ def summary_doc_ids_to_vector_store(
     max_tokens: Optional[int] = Body(
         None, description="限制LLM生成Token数量，默认None代表模型最大值"
     ),
+    current_user: dict = Depends(require_permission("knowledge_base", "write")),
 ) -> BaseResponse:
     """
     单个知识库根据doc_ids摘要
@@ -224,7 +231,7 @@ def summary_doc_ids_to_vector_store(
     :param embed_model:
     :return:
     """
-    kb = KBServiceFactory.get_service(knowledge_base_name, vs_type, embed_model)
+    kb = KBServiceFactory.get_service(knowledge_base_name, vs_type, embed_model, tenant_id=current_user.get("tenant_id") if isinstance(current_user, dict) else None)
     if not kb.exists():
         return BaseResponse(
             code=404, msg=f"未找到知识库 {knowledge_base_name}", data={}
