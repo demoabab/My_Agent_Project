@@ -3,7 +3,6 @@
 
 [![pypi badge](https://img.shields.io/pypi/v/langchain-chatchat.svg)](https://shields.io/)
 [![Generic badge](https://img.shields.io/badge/python-3.8%7C3.9%7C3.10%7C3.11-blue.svg)](https://pypi.org/project/pypiserver/)
-[![zread](https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff)](https://zread.ai/chatchat-space/Langchain-Chatchat)
 
 🌍 [READ THIS IN ENGLISH](README_en.md)
 
@@ -16,112 +15,258 @@
 ## 目录
 
 * [概述](README.md#概述)
+* [架构设计](README.md#架构设计)
 * [功能介绍](README.md#功能介绍)
-    * [0.3.x 功能一览](README.md#03x-版本功能一览)
-    * [已支持的模型推理框架与模型](README.md#已支持的模型部署框架与模型)
+* [多租户系统](README.md#多租户系统)
+* [RBAC 权限控制](README.md#rbac-权限控制)
 * [快速上手](README.md#快速上手)
-    * [pip 安装部署](README.md#pip-安装部署)
-    * [源码安装部署/开发部署](README.md#源码安装部署开发部署)
-    * [Docker 部署](README.md#docker-部署)
 * [项目里程碑](README.md#项目里程碑)
 * [联系我们](README.md#联系我们)
 
+---
+
 ## 概述
 
-🤖️ 一种利用 [langchain](https://github.com/langchain-ai/langchain)
-思想实现的基于本地知识库的问答应用，目标期望建立一套对中文场景与开源模型支持友好、可离线运行的知识库问答解决方案。
+🤖️ 一种利用 [langchain](https://github.com/langchain-ai/langchain) 思想实现的基于本地知识库的问答应用，目标期望建立一套对中文场景与开源模型支持友好、可离线运行的知识库问答解决方案。
 
-💡 受 [GanymedeNil](https://github.com/GanymedeNil) 的项目 [document.ai](https://github.com/GanymedeNil/document.ai)
-和 [AlexZhangji](https://github.com/AlexZhangji)
-创建的 [ChatGLM-6B Pull Request](https://github.com/THUDM/ChatGLM-6B/pull/216)
-启发，建立了全流程可使用开源模型实现的本地知识库问答应用。本项目的最新版本中可使用 [Xinference](https://github.com/xorbitsai/inference)、[Ollama](https://github.com/ollama/ollama)
-等框架接入 [GLM-4-Chat](https://github.com/THUDM/GLM-4)、 [Qwen2-Instruct](https://github.com/QwenLM/Qwen2)、 [Llama3](https://github.com/meta-llama/llama3)
-等模型，依托于 [langchain](https://github.com/langchain-ai/langchain)
-框架支持通过基于 [FastAPI](https://github.com/tiangolo/fastapi) 提供的 API
-调用服务，或使用基于 [Streamlit](https://github.com/streamlit/streamlit) 的 WebUI 进行操作。
+✅ 本项目支持市面上主流的开源 LLM、Embedding 模型与向量数据库，可实现全部使用**开源**模型**离线私有部署**。同时也支持 OpenAI API 及各类在线模型 API 的接入。
 
-![](docs/img/langchain_chatchat_0.3.0.png)
-
-✅ 本项目支持市面上主流的开源 LLM、 Embedding 模型与向量数据库，可实现全部使用**开源**模型**离线私有部署**。与此同时，本项目也支持
-OpenAI GPT API 的调用，并将在后续持续扩充对各类模型及模型 API 的接入。
-
-⛓️ 本项目实现原理如下图所示，过程包括加载文件 -> 读取文本 -> 文本分割 -> 文本向量化 -> 问句向量化 ->
-在文本向量中匹配出与问句向量最相似的 `top k`个 -> 匹配出的文本作为上下文和问题一起添加到 `prompt`中 -> 提交给 `LLM`生成回答。
-
-📺 [原理介绍视频](https://www.bilibili.com/video/BV13M4y1e7cN/?share_source=copy_web&vd_source=e6c5aafe684f30fbe41925d61ca6d514)
+⛓️ 实现原理：加载文件 → 读取文本 → 文本分割 → 向量化 → 相似度检索 top_k → 上下文 + 问题 → prompt → LLM 生成回答。
 
 ![实现原理图](docs/img/langchain+chatglm.png)
 
-从文档处理角度来看，实现流程如下：
+---
 
-![实现原理图2](docs/img/langchain+chatglm2.png)
+## 架构设计
 
-🚩 本项目未涉及微调、训练过程，但可利用微调或训练对本项目效果进行优化。
+### 技术栈
 
-🌐 [AutoDL 镜像](https://www.codewithgpu.com/i/chatchat-space/Langchain-Chatchat/Langchain-Chatchat) 中 `0.3.0`
-版本所使用代码已更新至本项目 `v0.3.0` 版本。
+| 层级 | 技术 |
+|------|------|
+| 前端 | Vue 3 + TypeScript + Vite + Element Plus + Pinia |
+| API 服务 | FastAPI (Python 3.8+) |
+| 数据库 | SQLAlchemy ORM + SQLite/PostgreSQL |
+| 向量存储 | FAISS / Milvus / Zilliz / PGVector / Elasticsearch / ChromaDB |
+| 模型接入 | Xinference / Ollama / OneAPI / OpenAI 兼容协议 |
+| 认证 | JWT Bearer Token + bcrypt |
+| 文档处理 | Langchain Document Loaders + 自研 OCR (RapidOCR) |
 
-🐳 Docker 镜像将会在近期更新。
+### 分层架构
 
-🧑‍💻 如果你想对本项目做出贡献，欢迎移步[开发指南](docs/contributing/README_dev.md) 获取更多开发部署相关信息。
+```
+Vue 3 SPA (frontend/)
+       │
+       ▼
+FastAPI (api_server/)        ← JWT 鉴权 + RBAC 权限中间件
+       │
+       ▼
+Business Logic               ← chat/ knowledge_base/ agent/
+       │
+       ├── Repository Layer  ← SQLAlchemy ORM + 租户隔离过滤
+       │
+       ├── Vector Stores     ← FAISS / Milvus / ChromaDB / ES / PG
+       │
+       └── Model Platforms   ← Xinference / Ollama / OpenAI / OneAPI
+```
+
+### 核心设计模式
+
+| 模式 | 应用场景 |
+|------|---------|
+| **多层多租户** | tenant_id 贯穿 DB 模型 → API → 磁盘路径全链路 |
+| **contextvars 上下文传播** | HTTP 请求的 tenant_id 自动注入所有 DB 查询和文件操作 |
+| **RBAC 权限** | user → tenant → role → permission 四层模型，admin 隐式通过 |
+| **工厂模式** | KBServiceFactory 运行时解析向量存储类型 |
+| **仓库模式** | Session 生命周期与业务逻辑分离，`@with_session` 装饰器管理 |
+| **依赖注入** | FastAPI `Depends(get_current_user)` / `Depends(require_permission(...))` |
+
+### 项目结构
+
+```
+Langchain-Chatchat/
+├── libs/chatchat-server/chatchat/
+│   ├── server/
+│   │   ├── api_server/          # FastAPI 路由层 (10 个模块)
+│   │   │   ├── auth_routes.py       # 认证: login/register/switch-tenant
+│   │   │   ├── tenant_routes.py     # 租户管理: CRUD + 成员管理
+│   │   │   ├── kb_routes.py         # 知识库: 文件/向量/搜索/对话
+│   │   │   ├── chat_routes.py       # 对话: kb_chat/file_chat/feedback
+│   │   │   ├── openai_routes.py     # OpenAI 兼容 /v1/* 端点
+│   │   │   ├── mcp_routes.py        # MCP 连接管理
+│   │   │   ├── server_routes.py     # 模型列表/配置
+│   │   │   └── tool_routes.py       # 工具调用
+│   │   ├── auth/                # JWT + RBAC (dependencies.py)
+│   │   ├── db/                  # SQLAlchemy ORM
+│   │   │   ├── models/              # 14 个数据模型 (全带 tenant_id)
+│   │   │   ├── repository/          # 仓库模式 CRUD
+│   │   │   ├── session.py           # with_session / with_tenant 装饰器
+│   │   │   └── migrations/          # Alembic 迁移脚本
+│   │   ├── chat/                # kb_chat / file_chat / feedback
+│   │   ├── knowledge_base/      # KB 服务 + 文件处理 + 向量缓存 + 摘要
+│   │   ├── agent/               # Agent 工具工厂
+│   │   ├── file_rag/            # 文档加载器 + 文本分割器 + 检索器
+│   │   └── context.py           # contextvars 租户上下文
+│   ├── frontend/                # Vue 3 源码
+│   ├── static/frontend/         # 前端构建产物 (生产环境)
+│   └── settings.py              # Pydantic 配置聚合 (5 类)
+└── chatchat_data/               # 运行时数据 (YAML 配置 + KB + DB)
+```
+
+---
 
 ## 功能介绍
 
 ### 0.3.x 版本功能一览
 
-| 功能        | 0.2.x                            | 0.3.x                                                               |
-|-----------|----------------------------------|---------------------------------------------------------------------|
-| 模型接入      | 本地：fastchat<br>在线：XXXModelWorker | 本地：model_provider,支持大部分主流模型加载框架<br>在线：oneapi<br>所有模型接入均兼容openai sdk |
-| Agent     | ❌不稳定                             | ✅针对ChatGLM3和Qwen进行优化,Agent能力显著提升                                    ||
-| LLM对话     | ✅                                | ✅                                                                   ||
-| 知识库对话     | ✅                                | ✅                                                                   ||
-| 搜索引擎对话    | ✅                                | ✅                                                                   ||
-| 文件对话      | ✅仅向量检索                           | ✅统一为File RAG功能,支持BM25+KNN等多种检索方式                                    ||
-| 数据库对话     | ❌                                | ✅                                                                   ||
-| 多模态图片对话     | ❌                                | ✅  推荐使用 qwen-vl-chat                   ||
-| ARXIV文献对话 | ❌                                | ✅                                                                   ||
-| Wolfram对话 | ❌                                | ✅                                                                   ||
-| 文生图       | ❌                                | ✅                                                                   ||
-| 本地知识库管理   | ✅                                | ✅                                                                   ||
-| WEBUI     | ✅                                | ✅更好的多会话支持,自定义系统提示词...                                               |
+| 功能 | 0.2.x | 0.3.x |
+|------|-------|-------|
+| 模型接入 | 本地：fastchat / 在线：XXXModelWorker | model_provider 统一接入，兼容 OpenAI SDK |
+| Agent | ❌不稳定 | ✅ 针对 ChatGLM3/Qwen 优化 |
+| LLM 对话 | ✅ | ✅ |
+| 知识库对话 | ✅ | ✅ |
+| 搜索引擎对话 | ✅ | ✅ |
+| 文件对话 | ✅ 仅向量检索 | ✅ File RAG: BM25+KNN 等多检索方式 |
+| 数据库对话 | ❌ | ✅ |
+| 多模态图片对话 | ❌ | ✅ (qwen-vl-chat) |
+| ARXIV 文献对话 | ❌ | ✅ |
+| Wolfram 对话 | ❌ | ✅ |
+| 文生图 | ❌ | ✅ |
+| 多租户 | ❌ | ✅ 租户隔离 + RBAC 权限 |
+| 本地知识库管理 | ✅ | ✅ |
+| WEBUI | ✅ Streamlit | ✅ Vue 3 SPA (更好的多会话+自定义提示词) |
 
-0.3.x 版本的核心功能由 Agent 实现,但用户也可以手动实现工具调用:
+### Agent 工具调用
 
-|操作方式|实现的功能|适用场景|
-|-------|---------|-------|
-|选中"启用Agent",选择多个工具|由LLM自动进行工具调用|使用ChatGLM3/Qwen或在线API等具备Agent能力的模型|
-|选中"启用Agent",选择单个工具|LLM仅解析工具参数|使用的模型Agent能力一般,不能很好的选择工具<br>想手动选择功能|
-|不选中"启用Agent",选择单个工具|不使用Agent功能的情况下,手动填入参数进行工具调用|使用的模型不具备Agent能力|
-|不选中任何工具，上传一个图片|图片对话|使用 qwen-vl-chat 等多模态模型|
+| 操作方式 | 功能 | 适用场景 |
+|---------|------|---------|
+| 启用 Agent + 多工具 | LLM 自动工具选择调用 | ChatGLM3/Qwen 等具备 Agent 能力的模型 |
+| 启用 Agent + 单工具 | LLM 仅解析参数 | Agent 能力一般的模型 |
+| 不启用 Agent + 单工具 | 手动调参 | 不具备 Agent 能力的模型 |
 
-更多功能和更新请实际部署体验.
+### 支持的模型部署框架
 
-### 已支持的模型部署框架与模型
+| 框架 | Xinference | LocalAI | Ollama | FastChat |
+|------|-----------|---------|--------|----------|
+| OpenAI API 对齐 | ✅ | ✅ | ✅ | ✅ |
+| 推理引擎 | GPTQ, GGML, vLLM, TensorRT, mlx | GPTQ, GGML, vLLM, TensorRT | GGUF, GGML | vLLM |
+| 模型类型 | LLM, Embedding, Rerank, T2I, Vision, Audio | 同上 | LLM, T2I, Vision | LLM, Vision |
+| Function Call | ✅ | ✅ | ✅ | / |
 
-本项目中已经支持市面上主流的如 [GLM-4-Chat](https://github.com/THUDM/GLM-4)
-与 [Qwen2-Instruct](https://github.com/QwenLM/Qwen2) 等新近开源大语言模型和 Embedding
-模型，这些模型需要用户自行启动模型部署框架后，通过修改配置信息接入项目，本项目已支持的本地模型部署框架如下：
+在线 API 支持：OpenAI ChatGPT / Azure OpenAI / Anthropic Claude / 智谱清言 / 百川等。
 
-| 模型部署框架             | Xinference                                                                               | LocalAI                                                    | Ollama                                                                         | FastChat                                                                             |
-|--------------------|------------------------------------------------------------------------------------------|------------------------------------------------------------|--------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| OpenAI API 接口对齐    | ✅                                                                                        | ✅                                                          | ✅                                                                              | ✅                                                                                    |
-| 加速推理引擎             | GPTQ, GGML, vLLM, TensorRT, mlx                                                          | GPTQ, GGML, vLLM, TensorRT                                 | GGUF, GGML                                                                     | vLLM                                                                                 |
-| 接入模型类型             | LLM, Embedding, Rerank, Text-to-Image, Vision, Audio                                     | LLM, Embedding, Rerank, Text-to-Image, Vision, Audio       | LLM, Text-to-Image, Vision                                                     | LLM, Vision                                                                          |
-| Function Call      | ✅                                                                                        | ✅                                                          | ✅                                                                              | /                                                                                    |
-| 更多平台支持(CPU, Metal) | ✅                                                                                        | ✅                                                          | ✅                                                                              | ✅                                                                                    |
-| 异构                 | ✅                                                                                        | ✅                                                          | /                                                                              | /                                                                                    |
-| 集群                 | ✅                                                                                        | ✅                                                          | /                                                                              | /                                                                                    |
-| 操作文档链接             | [Xinference 文档](https://inference.readthedocs.io/zh-cn/latest/models/builtin/index.html) | [LocalAI 文档](https://localai.io/model-compatibility/)      | [Ollama 文档](https://github.com/ollama/ollama?tab=readme-ov-file#model-library) | [FastChat 文档](https://github.com/lm-sys/FastChat#install)                            |
-| 可用模型               | [Xinference 已支持模型](https://inference.readthedocs.io/en/latest/models/builtin/index.html) | [LocalAI 已支持模型](https://localai.io/model-compatibility/#/) | [Ollama 已支持模型](https://ollama.com/library#/)                                   | [FastChat 已支持模型](https://github.com/lm-sys/FastChat/blob/main/docs/model_support.md) |
+---
 
-除上述本地模型加载框架外，项目中也为可接入在线 API 的 [One API](https://github.com/songquanpeng/one-api)
-框架接入提供了支持，支持包括 [OpenAI ChatGPT](https://platform.openai.com/docs/guides/gpt/chat-completions-api)、[Azure OpenAI API](https://learn.microsoft.com/en-us/azure/ai-services/openai/reference)、[Anthropic Claude](https://anthropic.com/)、[智谱清言](https://bigmodel.cn/)、[百川](https://platform.baichuan-ai.com/)
-等常用在线 API 的接入使用。
+## 多租户系统
 
-> [!Note]
-> 关于 Xinference 加载本地模型:
-> Xinference 内置模型会自动下载,如果想让它加载本机下载好的模型,可以在启动 Xinference 服务后,到项目 tools/model_loaders
-> 目录下执行 `streamlit run xinference_manager.py`,按照页面提示为指定模型设置本地路径即可.
+### 概述
+
+从 0.3.1 起，Langchain-Chatchat 支持完整的多租户数据隔离。每个用户可以创建或加入多个租户（Tenant），同一租户内的用户共享知识库、对话记录等资源，不同租户之间的数据完全隔离。
+
+### 数据隔离维度
+
+```
+租户 A                         租户 B
+├── 知识库 (KB1, KB2)          ├── 知识库 (KB3)
+├── 对话记录                     ├── 对话记录
+├── 上传文件                     ├── 上传文件
+├── 向量缓存 (FAISS)             ├── 向量缓存 (FAISS)
+├── 磁盘路径: /{tenant_a}/...    ├── 磁盘路径: /{tenant_b}/...
+└── 成员: user1(admin), user2   └── 成员: user3(admin)
+```
+
+### 隔离实现
+
+| 层面 | 实现方式 |
+|------|---------|
+| **数据库** | 14 个业务表全部携带 `tenant_id` 列，仓库层 `@with_tenant` 装饰器自动过滤 |
+| **API** | JWT token 携带 tenant_id → `set_current_tenant_context()` 注入 contextvars |
+| **磁盘** | `get_kb_path/get_vs_path/get_file_path` 全部传递 tenant_id，目录结构 `{KB_ROOT}/{tenant_id}/{kb_name}/` |
+| **缓存** | FAISS 向量库加载/保存路径纳入 tenant_id，不同租户独立索引文件 |
+
+### 租户管理 API
+
+| 端点 | 权限 | 说明 |
+|------|------|------|
+| `POST /api/v1/tenants` | 登录用户 | 创建租户（创建者自动成为 admin） |
+| `GET /api/v1/tenants` | 登录用户 | 获取用户所属租户列表 |
+| `POST /api/v1/tenants/{id}/members` | admin | 添加成员（按用户名查找+校验存在性） |
+| `GET /api/v1/tenants/{id}/members` | admin | 查看成员列表（含用户名和角色） |
+| `DELETE /api/v1/tenants/{id}/members/{user_id}` | admin | 移除成员 |
+
+### 租户切换
+
+用户登录后通过顶部栏下拉菜单切换当前活跃租户。切换后：
+1. 前端调用 `/api/v1/auth/switch-tenant` 获取新 JWT token
+2. 新 token 的 `tenant_id` claim 指向目标租户
+3. 后续所有 API 请求自动绑定新租户上下文
+
+### 知识库路径结构
+
+```
+{KB_ROOT_PATH}/
+├── {tenant_id_a}/
+│   ├── kb_alpha/
+│   │   ├── content/          ← 上传的原始文件
+│   │   └── vector_store/     ← FAISS 向量索引
+│   └── kb_beta/
+│       ├── content/
+│       └── vector_store/
+├── {tenant_id_b}/
+│   └── kb_gamma/
+│       ├── content/
+│       └── vector_store/
+└── info.db                   ← SQLite 元数据库
+```
+
+---
+
+## RBAC 权限控制
+
+### 权限模型
+
+```
+User ──┬── UserTenant (role) ──► Tenant
+       │
+       └── is_superuser: 绕过所有权限检查
+```
+
+| 角色 | knowledge_base | chat | 说明 |
+|------|:---:|:---:|------|
+| **admin** | read / write / delete | read / write | 隐式拥有所有权限 |
+| **member** | read / write | read / write | 可管理知识库，不可删除 |
+| **viewer** | read | read | 只读访问 |
+
+### 权限检查机制
+
+```python
+# 依赖注入模式：在路由函数签名末尾声明
+def create_kb(
+    ...,
+    current_user: dict = Depends(require_permission("knowledge_base", "write")),
+) -> BaseResponse:
+    ...
+
+# require_permission 内部流程:
+# 1. 调用 get_current_user() 验证 JWT → 设置 contextvars
+# 2. 检查 is_superuser → 直接通过
+# 3. 检查是否为 tenant admin → 直接通过
+# 4. 查询 PermissionModel 表验证 role 权限
+```
+
+### 受保护的端点
+
+所有核心业务端点（21 个）均已挂载鉴权依赖：
+
+| 资源 | read (get_current_user) | write (require_permission) | delete (require_permission) |
+|------|------------------------|---------------------------|----------------------------|
+| **knowledge_base** | list_kbs, list_files, search_docs, download_doc, kb_chat | create_kb, upload_docs, update_docs, recreate_vector_store | delete_kb, delete_docs |
+| **chat** | kb_chat, file_chat, chat_completions | chat_feedback | — |
+
+### 无 token 请求行为
+
+未携带有效 JWT 的请求 → **401 Unauthorized**；权限不足 → **403 Forbidden**。
+
+---
 
 ## 快速上手
 
@@ -129,206 +274,95 @@ OpenAI GPT API 的调用，并将在后续持续扩充对各类模型及模型 A
 
 #### 0. 软硬件要求
 
-💡 软件方面，本项目已支持在 Python 3.8-3.11 环境中进行使用，并已在 Windows、macOS、Linux 操作系统中进行测试。
+💡 软件：Python 3.8-3.11，Windows / macOS / Linux 均已测试。
 
-💻 硬件方面，因 0.3.0 版本已修改为支持不同模型部署框架接入，因此可在 CPU、GPU、NPU、MPS 等不同硬件条件下使用。
+💻 硬件：支持 CPU / GPU / NPU / MPS 等多种硬件条件。
 
-#### 1. 安装 Langchain-Chatchat
-
-从 0.3.0 版本起，Langchain-Chatchat 提供以 Python 库形式的安装方式，具体安装请执行：
+#### 1. 安装
 
 ```shell
 pip install langchain-chatchat -U
+
+# 如需搭配 Xinference:
+pip install "langchain-chatchat[xinference]" -U
 ```
 
-> [!important]
-> 为确保所使用的 Python 库为最新版，建议使用官方 Pypi 源或清华源。
+#### 2. 启动模型推理框架
 
-> [!Note]
-> 因模型部署框架 Xinference 接入 Langchain-Chatchat 时需要额外安装对应的 Python 依赖库，因此如需搭配 Xinference
-> 框架使用时，建议使用如下安装方式：
-> ```shell
-> pip install "langchain-chatchat[xinference]" -U
-> ```
+请先部署模型推理框架（Xinference / Ollama / OneAPI 等）并加载所需 LLM 和 Embedding 模型。
 
-#### 2. 模型推理框架并加载模型
+> 建议将 Langchain-Chatchat 和模型框架放在不同的 Python 虚拟环境中。
 
-从 0.3.0 版本起，Langchain-Chatchat 不再根据用户输入的本地模型路径直接进行模型加载，涉及到的模型种类包括
-LLM、Embedding、Reranker
-及后续会提供支持的多模态模型等，均改为支持市面常见的各大模型推理框架接入，如 [Xinference](https://github.com/xorbitsai/inference)、[Ollama](https://github.com/ollama/ollama)、[LocalAI](https://github.com/mudler/LocalAI)、[FastChat](https://github.com/lm-sys/FastChat)、[One API](https://github.com/songquanpeng/one-api)
-等。
-
-因此，请确认在启动 Langchain-Chatchat 项目前，首先进行模型推理框架的运行，并加载所需使用的模型。
-
-这里以 Xinference 举例,
-请参考 [Xinference文档](https://inference.readthedocs.io/zh-cn/latest/getting_started/installation.html) 进行框架部署与模型加载。
-
-> [!WARNING]  
-> 为避免依赖冲突，请将 Langchain-Chatchat 和模型部署框架如 Xinference 等放在不同的 Python 虚拟环境中, 比如 conda, venv,
-> virtualenv 等。
-
-#### 3. 初始化项目配置与数据目录
-
-从 0.3.1 版本起，Langchain-Chatchat 使用本地 `yaml` 文件的方式进行配置，用户可以直接查看并修改其中的内容，服务器会自动更新无需重启。
-
-1. 设置 Chatchat 存储配置文件和数据文件的根目录（可选）
+#### 3. 初始化配置
 
 ```shell
-# on linux or macos
+# 可选：设置数据根目录
+# Linux/macOS:
 export CHATCHAT_ROOT=/path/to/chatchat_data
-
-# on windows
+# Windows:
 set CHATCHAT_ROOT=/path/to/chatchat_data
-```
 
-若不设置该环境变量，则自动使用当前目录。
-
-2. 执行初始化
-
-```shell
+# 初始化（创建目录、复制 samples、生成 yaml 配置）
 chatchat init
 ```
 
-该命令会执行以下操作：
+修改生成的配置文件：
 
-- 创建所有需要的数据目录
-- 复制 samples 知识库内容
-- 生成默认 `yaml` 配置文件
+- `model_settings.yaml` — 配置模型平台和默认 LLM/Embedding
+- `basic_settings.yaml` — 配置知识库路径、数据库 URI、JWT 密钥
 
-3. 修改配置文件
+```yaml
+# model_settings.yaml 核心修改:
+DEFAULT_LLM_MODEL: qwen1.5-chat
+DEFAULT_EMBEDDING_MODEL: bge-large-zh-v1.5
+# 在 MODEL_PLATFORMS 中填入模型平台连接信息
 
-- 配置模型（model_settings.yaml）  
-  需要根据步骤 **2. 模型推理框架并加载模型**
-  中选用的模型推理框架与加载的模型进行模型接入配置，具体参考 `model_settings.yaml` 中的注释。主要修改以下内容：
-  ```yaml
-  # 默认选用的 LLM 名称
-   DEFAULT_LLM_MODEL: qwen1.5-chat
-
-   # 默认选用的 Embedding 名称
-   DEFAULT_EMBEDDING_MODEL: bge-large-zh-v1.5
-
-  # 将 `LLM_MODEL_CONFIG` 中 `llm_model, action_model` 的键改成对应的 LLM 模型
-  # 在 `MODEL_PLATFORMS` 中修改对应模型平台信息
-  ```
-- 配置知识库路径（basic_settings.yaml）（可选）  
-  默认知识库位于 `CHATCHAT_ROOT/data/knowledge_base`，如果你想把知识库放在不同的位置，或者想连接现有的知识库，可以在这里修改对应目录即可。
-  ```yaml
-  # 知识库默认存储路径
-   KB_ROOT_PATH: D:\chatchat-test\data\knowledge_base
-
-   # 数据库默认存储路径。如果使用sqlite，可以直接修改DB_ROOT_PATH；如果使用其它数据库，请直接修改SQLALCHEMY_DATABASE_URI。
-   DB_ROOT_PATH: D:\chatchat-test\data\knowledge_base\info.db
-
-   # 知识库信息数据库连接URI
-   SQLALCHEMY_DATABASE_URI: sqlite:///D:\chatchat-test\data\knowledge_base\info.db
-  ```
-- 配置知识库（kb_settings.yaml）（可选）
-
-  默认使用 `FAISS` 知识库，如果想连接其它类型的知识库，可以修改 `DEFAULT_VS_TYPE` 和 `kbs_config`。
+# basic_settings.yaml:
+KB_ROOT_PATH: /path/to/knowledge_base
+SQLALCHEMY_DATABASE_URI: sqlite:////path/to/info.db
+JWT_SECRET_KEY: your-secret-key
+```
 
 #### 4. 初始化知识库
-
-> [!WARNING]  
-> 进行知识库初始化前，请确保已经启动模型推理框架及对应 `embedding` 模型，且已按照上述**步骤3**完成模型接入配置。
 
 ```shell
 chatchat kb -r
 ```
 
-更多功能可以查看 `chatchat kb --help`
+出现文件计数和用时即为成功。
 
-出现以下日志即为成功:
-
-```text 
-
-----------------------------------------------------------------------------------------------------
-知识库名称      ：samples
-知识库类型      ：faiss
-向量模型：      ：bge-large-zh-v1.5
-知识库路径      ：/root/anaconda3/envs/chatchat/lib/python3.11/site-packages/chatchat/data/knowledge_base/samples
-文件总数量      ：47
-入库文件数      ：42
-知识条目数      ：740
-用时            ：0:02:29.701002
-----------------------------------------------------------------------------------------------------
-
-总计用时        ：0:02:33.414425
-
-```
-
-> [!Note]
-> 知识库初始化的常见问题
->
-> <details>
->
-> ##### 1. Windows 下重建知识库或添加知识文件时卡住不动
-> 此问题常出现于新建虚拟环境中，可以通过以下方式确认：
->
-> `from unstructured.partition.auto import partition`
->
-> 如果该语句卡住无法执行，可以执行以下命令：
-> ```shell
-> pip uninstall python-magic-bin
-> # check the version of the uninstalled package
-> pip install 'python-magic-bin=={version}'
-> ```
-> 然后按照本节指引重新创建知识库即可。
->
-> </details>
-
-#### 5. 启动项目
+#### 5. 启动
 
 ```shell
 chatchat start -a
 ```
 
-出现以下界面即为启动成功:
+默认监听 `http://127.0.0.1:7861`，前端界面位于 `/app/`。
 
-![WebUI界面](docs/img/langchain_chatchat_webui.png)
-
-> [!WARNING]  
-> 由于 chatchat 配置默认监听地址 `DEFAULT_BIND_HOST` 为 127.0.0.1, 所以无法通过其他 ip 进行访问。
->
-> 如需通过机器ip 进行访问(如 Linux 系统), 需要到 `basic_settings.yaml` 中将监听地址修改为 0.0.0.0。
-> </details>
-
-### 其它配置
-
-1. 数据库对话配置请移步这里 [数据库对话配置说明](docs/install/README_text2sql.md)
-
+> 如需外部访问，修改 `basic_settings.yaml` 中 `DEFAULT_BIND_HOST` 为 `0.0.0.0`。
 
 ### 源码安装部署/开发部署
 
-源码安装部署请参考 [开发指南](docs/contributing/README_dev.md)
+参考 [开发指南](docs/contributing/README_dev.md)
 
 ### Docker 部署
 
 ```shell
 docker pull chatimage/chatchat:0.3.1.3-93e2c87-20240829
-
-docker pull ccr.ccs.tencentyun.com/langchain-chatchat/chatchat:0.3.1.3-93e2c87-20240829 # 国内镜像
 ```
 
-> [!important]
-> 强烈建议: 使用 docker-compose 部署, 具体参考 [README_docker](docs/install/README_docker.md)
-
-### 旧版本迁移
-
-* 0.3.x 结构改变很大,强烈建议您按照文档重新部署. 以下指南不保证100%兼容和成功. 记得提前备份重要数据!
-
-- 首先按照 `安装部署` 中的步骤配置运行环境，修改配置文件
-- 将 0.2.x 项目的 knowledge_base 目录拷贝到配置的 `DATA` 目录下
+> 推荐使用 docker-compose，参考 [README_docker](docs/install/README_docker.md)
 
 ---
 
 ## 项目里程碑
 
-+ `2023年4月`: `Langchain-ChatGLM 0.1.0` 发布，支持基于 ChatGLM-6B 模型的本地知识库问答。
-+ `2023年8月`: `Langchain-ChatGLM` 改名为 `Langchain-Chatchat`，发布 `0.2.0` 版本，使用 `fastchat` 作为模型加载方案，支持更多的模型和数据库。
-+ `2023年10月`: `Langchain-Chatchat 0.2.5` 发布，推出 Agent 内容，开源项目在`Founder Park & Zhipu AI & Zilliz`
-  举办的黑客马拉松获得三等奖。
-+ `2023年12月`: `Langchain-Chatchat` 开源项目获得超过 **20K** stars.
-+ `2024年6月`: `Langchain-Chatchat 0.3.0` 发布，带来全新项目架构。
++ `2023年4月`: `Langchain-ChatGLM 0.1.0` 发布，支持 ChatGLM-6B 本地知识库问答。
++ `2023年8月`: 改名 `Langchain-Chatchat`，`0.2.0` 发布，fastchat 模型加载，更多模型和数据库。
++ `2023年10月`: `0.2.5` 发布，Agent 功能，黑客马拉松三等奖。
++ `2023年12月`: 开源项目获得超过 **20K** stars。
++ `2024年6月`: `0.3.0` 发布，全新项目架构。
++ `2024年7月`: `0.3.1` 发布，Vue 3 前端 + 多租户隔离 + RBAC 权限系统。
 
 + 🔥 让我们一起期待未来 Chatchat 的故事 ···
 
@@ -348,7 +382,7 @@ docker pull ccr.ccs.tencentyun.com/langchain-chatchat/chatchat:0.3.1.3-93e2c87-2
 
 <img src="docs/img/qr_code_117_2.jpg" alt="二维码" width="300" />
 
-🎉 Langchain-Chatchat 项目微信交流群，如果你也对本项目感兴趣，欢迎加入群聊参与讨论交流。
+🎉 Langchain-Chatchat 项目微信交流群，欢迎加入群聊参与讨论交流。
 
 ### 公众号
 
