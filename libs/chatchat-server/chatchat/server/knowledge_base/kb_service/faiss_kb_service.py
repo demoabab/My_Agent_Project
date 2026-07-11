@@ -23,19 +23,21 @@ class FaissKBService(KBService):
         return SupportedVSType.FAISS
 
     def get_vs_path(self):
-        return get_vs_path(self.kb_name, self.vector_name)
+        return get_vs_path(self.kb_name, self.vector_name, self.tenant_id)
 
     def get_kb_path(self):
-        return get_kb_path(self.kb_name)
+        return get_kb_path(self.kb_name, self.tenant_id)
 
     def load_vector_store(self) -> ThreadSafeFaiss:
         return kb_faiss_pool.load_vector_store(
             kb_name=self.kb_name,
             vector_name=self.vector_name,
             embed_model=self.embed_model,
+            tenant_id=self.tenant_id,
         )
 
     def save_vector_store(self):
+        os.makedirs(self.vs_path, exist_ok=True)
         self.load_vector_store().save(self.vs_path)
 
     def get_doc_by_ids(self, ids: List[str]) -> List[Document]:

@@ -94,6 +94,7 @@ class KBFaissPool(_FaissPool):
         vector_name: str = None,
         create: bool = True,
         embed_model: str = get_default_embedding(),
+        tenant_id: str = None,
     ) -> ThreadSafeFaiss:
         self.atomic.acquire()
         locked = True
@@ -109,7 +110,7 @@ class KBFaissPool(_FaissPool):
                     logger.info(
                         f"loading vector store in '{kb_name}/vector_store/{vector_name}' from disk."
                     )
-                    vs_path = get_vs_path(kb_name, vector_name)
+                    vs_path = get_vs_path(kb_name, vector_name, tenant_id)
 
                     if os.path.isfile(os.path.join(vs_path, "index.faiss")):
                         embeddings = get_Embeddings(embed_model=embed_model)

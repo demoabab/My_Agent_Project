@@ -330,6 +330,7 @@ class KnowledgeFile:
         self,
         filename: str,
         knowledge_base_name: str,
+        tenant_id: str = None,
         loader_kwargs: Dict = {},
     ):
         """
@@ -341,7 +342,7 @@ class KnowledgeFile:
         if self.ext not in SUPPORTED_EXTS:
             raise ValueError(f"暂未支持的文件格式 {self.filename}")
         self.loader_kwargs = loader_kwargs
-        self.filepath = get_file_path(knowledge_base_name, filename)
+        self.filepath = get_file_path(knowledge_base_name, filename, tenant_id)
         self.docs = None
         self.splited_docs = None
         self.document_loader_name = get_LoaderClass(self.ext)

@@ -15,6 +15,7 @@ from chatchat.server.knowledge_base.kb_cache.faiss_cache import (
     ThreadSafeFaiss,
     kb_faiss_pool,
 )
+from chatchat.server.knowledge_base.utils import get_kb_path
 
 
 class KBSummaryService(ABC):
@@ -24,10 +25,14 @@ class KBSummaryService(ABC):
     kb_path: str
 
     def __init__(
-        self, knowledge_base_name: str, embed_model: str = get_default_embedding()
+        self,
+        knowledge_base_name: str,
+        embed_model: str = get_default_embedding(),
+        tenant_id: str = None,
     ):
         self.kb_name = knowledge_base_name
         self.embed_model = embed_model
+        self.tenant_id = tenant_id
 
         self.kb_path = self.get_kb_path()
         self.vs_path = self.get_vs_path()
@@ -39,7 +44,7 @@ class KBSummaryService(ABC):
         return os.path.join(self.get_kb_path(), "summary_vector_store")
 
     def get_kb_path(self):
-        return os.path.join(Settings.basic_settings.KB_ROOT_PATH, self.kb_name)
+        return get_kb_path(self.kb_name, self.tenant_id)
 
     def load_vector_store(self) -> ThreadSafeFaiss:
         return kb_faiss_pool.load_vector_store(
@@ -47,6 +52,7 @@ class KBSummaryService(ABC):
             vector_name="summary_vector_store",
             embed_model=self.embed_model,
             create=True,
+            tenant_id=self.tenant_id,
         )
 
     def add_kb_summary(self, summary_combine_docs: List[Document]):

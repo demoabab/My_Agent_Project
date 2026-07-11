@@ -58,10 +58,10 @@ class ChromaKBService(KBService):
         return SupportedVSType.CHROMADB
 
     def get_vs_path(self) -> str:
-        return get_vs_path(self.kb_name, self.embed_model)
+        return get_vs_path(self.kb_name, self.embed_model, self.tenant_id)
 
     def get_kb_path(self) -> str:
-        return get_kb_path(self.kb_name)
+        return get_kb_path(self.kb_name, self.tenant_id)
     
     def _load_chroma(self):
         self.chroma = Chroma(
