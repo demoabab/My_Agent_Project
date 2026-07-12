@@ -17,6 +17,9 @@
 * [核心亮点](README.md#核心亮点)
 * [架构设计](README.md#架构设计)
 * [功能介绍](README.md#功能介绍)
+  * [知识库](README.md#知识库)
+  * [长期记忆](README.md#长期记忆)
+  * [对话模式](README.md#对话模式)
 * [多租户系统](README.md#多租户系统)
 * [RBAC 权限控制](README.md#rbac-权限控制)
 * [前端界面](README.md#前端界面)
@@ -37,13 +40,15 @@
 | **文件对话** | 上传文件即时向量化 + FAISS 内存检索 |
 | **数据库对话** | Text2SQL 自然语言转 SQL（支持 MySQL / PostgreSQL / ClickHouse 等）|
 | **多模态对话** | 图片对话（qwen-vl-chat）、文生图 |
+| **多查询检索** | LLM 多角度改写查询 → 并行检索 → 去重融合，提升召回率 |
 | **深度调研 Skill** | 4 步 mini-Agent：搜索 → 提取 URL → 抓取页面 → LLM 总结报告 |
 
 ### 企业级基础设施
 
 | 功能 | 说明 |
 |------|------|
-| **多租户隔离** | DB 14 张表 + 磁盘路径 + API 全链路 `tenant_id` 传播 |
+| **长期记忆** | 跨会话 LLM 记忆提取/注入：用户画像 + 事实/偏好/决策存储 + system prompt 注入 |
+| **多租户隔离** | DB 17 张表 + 磁盘路径 + API 全链路 `tenant_id` 传播 |
 | **RBAC 权限** | admin / member / viewer 三级角色，细粒度资源-操作权限矩阵 |
 | **JWT 认证** | Bearer Token + bcrypt 密码哈希，token 携带 tenant_id claim |
 | **OpenAI 兼容** | `/v1/*` 端点完整兼容 OpenAI SDK，智能模型路由与并发控制 |
@@ -56,6 +61,7 @@
 | **OCR 识别** | RapidOCR 引擎（Paddle/ONNX），支持 PDF / DOCX / PPTX / 图片 |
 | **中文优化** | 中文字符递归分割器、阿里语义分割模型、标题增强 |
 | **混合检索** | Ensemble 检索器（BM25 + 向量搜索，权重可配）|
+| **多查询检索** | LLM 多角度改写查询 → 并行检索 → 去重融合，召回率提升 10-30% |
 
 ### 模型生态
 
@@ -102,7 +108,7 @@
      ┌─────────┼─────────┬──────────────┐
      ▼         ▼         ▼              ▼
   SQL DB   FAISS    Model API    MCP Servers
-  (14表)   (本地)   (Xinference/  (外部工具)
+  (17表)   (本地)   (Xinference/  (外部工具)
                     Ollama/OpenAI)
 ```
 
@@ -161,8 +167,43 @@
 
 - **7 种向量数据库**：FAISS（本地）/ Milvus / Zilliz / PGVector / Elasticsearch / ChromaDB / Relyt
 - **Ensemble 检索**：BM25（jieba 分词）+ 向量搜索混合，权重可配
+- **多查询检索**：LLM 生成 N 个多角度改写查询，并行检索后去重融合（`ENABLE_MULTI_QUERY: true`，`MULTI_QUERY_NUM: 3`，`kb_settings.yaml` 配置）
 - **多格式支持**：PDF / DOCX / PPTX / XLSX / HTML / CSV / JSON / Markdown / TXT / 图片（OCR）
 - **RapidOCR 引擎**：中文 OCR，Paddle / ONNX 双运行时，支持 GPU 加速
+
+### 长期记忆
+
+基于 LLM 的跨会话记忆系统，实现个性化问答体验。
+
+| 组件 | 存储表 | 说明 |
+|------|--------|------|
+| **用户画像** | `user_profile` | 专业领域、回答风格偏好、关键事实列表 |
+| **记忆条目** | `conversation_memory` | 事实 / 偏好 / 决策，按重要性权重排序 |
+| **会话摘要** | `conversation_summary` | 长对话压缩，关键要点提取 |
+
+**工作流程：**
+
+```
+对话完成 → LLM 提取记忆（异步）
+  ├─ facts → user_profile.key_facts + conversation_memory
+  ├─ preferences → user_profile (response_style/expertise_domain)
+  └─ decisions → conversation_memory (importance=0.8)
+
+下一次对话 → load_user_memory(user_id)
+  ├─ 读取 user_profile + top-N 记忆
+  └─ 注入 system prompt（最高优先级）
+       → LLM 感知用户身份/偏好/历史关键信息
+```
+
+**关键设计：**
+
+| 特性 | 实现 |
+|------|------|
+| **异步提取** | `_extract_memory()` 在回答完成后异步执行，不阻塞用户响应 |
+| **System Message 注入** | 记忆上下文作为 system role 消息置于 messages 最前，优先级高于 RAG 上下文 |
+| **语义去重** | `SequenceMatcher` 0.55 阈值 + 归一化，避免相同信息重复存储 |
+| **容量控制** | 每用户最多 100 条记忆，按 importance + create_time 排序淘汰 |
+| **多租户隔离** | 所有记忆表携带 `tenant_id`，`@with_tenant` 自动过滤 |
 
 ### 对话模式
 
@@ -382,6 +423,7 @@ docker pull chatimage/chatchat:0.3.1.3-93e2c87-20240829
 + `2023年12月`: 开源项目突破 **20K** stars
 + `2024年6月`: **0.3.0** — 全新架构，模型平台抽象，多 Agent 类型
 + `2024年7月`: **0.3.1** — Vue 3 前端 + 多租户隔离 + RBAC 权限 + MCP 协议 + 17 个 Agent 工具 + 5 种搜索引擎 + 7 种向量数据库
++ `2025年7月`: **增强版** — 多查询检索（MultiQuery）+ 长期记忆系统（用户画像 + 跨会话记忆 + LLM 提取/注入）
 
 ---
 
