@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Set
 
 from langchain_core.documents import Document
@@ -83,27 +82,21 @@ def multi_query_search(
     llm: BaseLanguageModel,
     num_queries: int = 3,
     include_original: bool = True,
-) -> List[Document]:
+) -> List[Dict]:
     queries = _generate_queries(llm, query, num_queries)
     all_queries = [query] + queries if include_original else queries
 
     all_docs: List[Document] = []
-    with ThreadPoolExecutor(max_workers=len(all_queries)) as pool:
-        futures = {
-            pool.submit(kb.search_docs, q, top_k, score_threshold): q
-            for q in all_queries
-        }
-        for future in as_completed(futures):
-            try:
-                docs = future.result()
-                all_docs.extend(docs)
-            except Exception as e:
-                q = futures[future]
-                logger.warning(f"MultiQuery search failed for '{q[:50]}...': {e}")
+    for q in all_queries:
+        try:
+            docs = kb.search_docs(q, top_k, score_threshold)
+            all_docs.extend(docs)
+        except Exception as e:
+            logger.warning(f"MultiQuery search failed for '{q[:50]}...': {e}")
 
     unique_docs = _unique_documents(all_docs)
     logger.info(f"MultiQuery: {len(all_docs)} raw docs -> {len(unique_docs)} unique, returning top {top_k}")
-    return unique_docs[:top_k]
+    return [doc.dict() for doc in unique_docs[:top_k]]
 
 
 async def multi_query_search_async(
@@ -114,7 +107,7 @@ async def multi_query_search_async(
     llm: BaseLanguageModel,
     num_queries: int = 3,
     include_original: bool = True,
-) -> List[Document]:
+) -> List[Dict]:
     queries = await _agenerate_queries(llm, query, num_queries)
     all_queries = [query] + queries if include_original else queries
 
@@ -133,4 +126,4 @@ async def multi_query_search_async(
 
     unique_docs = _unique_documents(all_docs)
     logger.info(f"MultiQuery: {len(all_docs)} raw docs -> {len(unique_docs)} unique, returning top {top_k}")
-    return unique_docs[:top_k]
+    return [doc.dict() for doc in unique_docs[:top_k]]
