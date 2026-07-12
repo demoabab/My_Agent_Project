@@ -187,6 +187,12 @@ class KBSettings(BaseFileSettings):
     SEARCH_ENGINE_TOP_K: int = 3
     """搜索引擎匹配结题数量"""
 
+    ENABLE_MULTI_QUERY: bool = False
+    """是否启用多查询检索，使用 LLM 从不同角度生成多个改写查询，提升召回率"""
+
+    MULTI_QUERY_NUM: int = 3
+    """多查询检索生成的改写查询数量，建议 2~4，越多召回越全但检索耗时成倍增加"""
+
     ZH_TITLE_ENHANCE: bool = False
     """是否开启中文标题加强，以及标题增强的相关配置"""
 

@@ -17,6 +17,7 @@ from chatchat.server.api_server.api_schemas import OpenAIChatOutput
 from chatchat.server.auth.dependencies import get_current_user
 from chatchat.server.chat.utils import History
 from chatchat.server.knowledge_base.kb_service.base import KBServiceFactory
+from chatchat.server.file_rag.retrievers.multi_query import multi_query_search
 from chatchat.server.knowledge_base.kb_doc_api import search_docs, search_temp_docs
 from chatchat.server.knowledge_base.utils import format_reference
 from chatchat.server.db.repository import (
@@ -62,6 +63,7 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
                     description="使用的prompt模板名称(在prompt_settings.yaml中配置)"
                 ),
                 return_direct: bool = Body(False, description="直接返回检索结果，不送入 LLM"),
+                multi_query: bool = Body(Settings.kb_settings.ENABLE_MULTI_QUERY, description="是否启用多查询检索，使用 LLM 改写多个查询提升召回率"),
                 conversation_id: str = Body("", description="对话框ID"),
                 request: Request = None,
                 current_user: dict = Depends(get_current_user),
@@ -97,14 +99,31 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
                 ok, msg = kb.check_embed_model()
                 if not ok:
                     raise ValueError(msg)
-                docs = await run_in_threadpool(search_docs,
-                                                query=query,
-                                                knowledge_base_name=kb_name,
-                                                top_k=top_k,
-                                                score_threshold=score_threshold,
-                                                file_name="",
-                                                metadata={},
-                                                current_user=current_user)
+                if multi_query:
+                    query_llm = get_ChatOpenAI(
+                        model_name=model,
+                        temperature=temperature,
+                        max_tokens=max_tokens or Settings.model_settings.MAX_TOKENS,
+                        streaming=False,
+                    )
+                    docs = await run_in_threadpool(
+                        multi_query_search,
+                        query=query,
+                        kb=kb,
+                        top_k=top_k,
+                        score_threshold=score_threshold,
+                        llm=query_llm,
+                        num_queries=Settings.kb_settings.MULTI_QUERY_NUM,
+                    )
+                else:
+                    docs = await run_in_threadpool(search_docs,
+                                                    query=query,
+                                                    knowledge_base_name=kb_name,
+                                                    top_k=top_k,
+                                                    score_threshold=score_threshold,
+                                                    file_name="",
+                                                    metadata={},
+                                                    current_user=current_user)
                 source_documents = format_reference(kb_name, docs, api_address(is_public=True))
             elif mode == "temp_kb":
                 ok, msg = check_embed_model()
