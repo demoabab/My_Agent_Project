@@ -19,6 +19,7 @@ from chatchat.server.chat.utils import History
 from chatchat.server.knowledge_base.kb_service.base import KBServiceFactory
 from chatchat.server.file_rag.retrievers.multi_query import multi_query_search
 from chatchat.server.knowledge_base.kb_doc_api import search_docs, search_temp_docs
+from chatchat.server.memory.memory_service import _extract_memory, load_user_memory
 from chatchat.server.knowledge_base.utils import format_reference
 from chatchat.server.db.repository import (
     add_message_to_db, update_message, add_conversation_to_db, get_conversation_from_db
@@ -204,12 +205,20 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
             #     print(docs)
             context = "\n\n".join([doc["page_content"] for doc in docs])
 
+            # 加载用户长期记忆
+            user_id = current_user.get("user_id", "") if isinstance(current_user, dict) else ""
+            memory_context = ""
+            if user_id:
+                memory_context = await run_in_threadpool(load_user_memory, user_id)
+
             if len(docs) == 0:  # 如果没有找到相关文档，使用empty模板
                 prompt_name = "empty"
             prompt_template = get_prompt_template("rag", prompt_name)
             input_msg = History(role="user", content=prompt_template).to_msg_template(False)
-            chat_prompt = ChatPromptTemplate.from_messages(
-                [i.to_msg_template() for i in history] + [input_msg])
+            messages = [i.to_msg_template() for i in history] + [input_msg]
+            if memory_context:
+                messages.insert(0, ("system", memory_context))
+            chat_prompt = ChatPromptTemplate.from_messages(messages)
 
             chain = chat_prompt | llm
 
@@ -260,6 +269,24 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
 
             if message_id and answer:
                 update_message(message_id, answer)
+
+            # 异步提取长期记忆（不阻塞响应）
+            if user_id and answer:
+                memory_llm = get_ChatOpenAI(
+                    model_name=model,
+                    temperature=0.1,
+                    max_tokens=512,
+                    streaming=False,
+                )
+                await run_in_threadpool(
+                    _extract_memory,
+                    llm=memory_llm,
+                    query=query,
+                    response=answer,
+                    user_id=user_id,
+                    conversation_id=conversation_id,
+                    tenant_id=current_user.get("tenant_id") if isinstance(current_user, dict) else None,
+                )
         except asyncio.exceptions.CancelledError:
             logger.warning("streaming progress has been interrupted by user.")
             return
@@ -271,4 +298,7 @@ async def kb_chat(query: str = Body(..., description="用户输入", examples=["
     if stream:
         return EventSourceResponse(knowledge_base_chat_iterator())
     else:
-        return await knowledge_base_chat_iterator().__anext__()
+        final = None
+        async for item in knowledge_base_chat_iterator():
+            final = item
+        return final

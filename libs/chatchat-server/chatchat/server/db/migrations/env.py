@@ -21,6 +21,9 @@ from chatchat.server.db.models.user_model import UserModel
 from chatchat.server.db.models.tenant_model import TenantModel
 from chatchat.server.db.models.user_tenant import UserTenantModel
 from chatchat.server.db.models.role_model import RoleModel, PermissionModel
+from chatchat.server.db.models.user_profile_model import UserProfileModel  # noqa: F401
+from chatchat.server.db.models.memory_model import MemoryModel  # noqa: F401
+from chatchat.server.db.models.conversation_summary_model import ConversationSummaryModel  # noqa: F401
 
 target_metadata = Base.metadata
 
