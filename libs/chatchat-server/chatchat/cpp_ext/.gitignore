@@ -1,0 +1,10 @@
+# 编译产物
+*.pyd
+*.dll
+
+# 构建目录
+build/
+build2/
+
+# Python
+__pycache__/

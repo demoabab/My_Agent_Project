@@ -178,8 +178,8 @@ class KBSettings(BaseFileSettings):
     VECTOR_SEARCH_TOP_K: int = 3 # TODO: 与 tool 配置项重复
     """知识库匹配向量数量"""
 
-    SCORE_THRESHOLD: float = 2.0
-    """知识库匹配相关度阈值，取值范围在0-2之间，SCORE越小，相关度越高，取到2相当于不筛选，建议设置在0.5左右"""
+    SCORE_THRESHOLD: float = 0.3
+    """知识库匹配相关度阈值，取值范围0~1，值越高匹配越严格。0.3 适合通用场景，配合 BM25 混合检索"""
 
     DEFAULT_SEARCH_ENGINE: t.Literal["bing", "duckduckgo", "metaphor", "searx"] = "duckduckgo"
     """默认搜索引擎"""

@@ -28,15 +28,17 @@ class EnsembleRetrieverService(BaseRetrieverService):
             search_type="similarity_score_threshold",
             search_kwargs={"score_threshold": score_threshold, "k": top_k},
         )
-        # TODO: 换个不用torch的实现方式
-        # from cutword.cutword import Cutter
-        import jieba
+        # 尝试加载 C++ 分词扩展，失败则回退到 jieba
+        try:
+            from chatchat.cpp_ext import lcut_for_search as tokenize
+        except ImportError:
+            import jieba
+            tokenize = jieba.lcut_for_search
 
-        # cutter = Cutter()
         docs = list(vectorstore.docstore._dict.values())
         bm25_retriever = BM25Retriever.from_documents(
             docs,
-            preprocess_func=jieba.lcut_for_search,
+            preprocess_func=tokenize,
         )
         bm25_retriever.k = top_k
         ensemble_retriever = EnsembleRetriever(

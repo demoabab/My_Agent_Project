@@ -188,6 +188,12 @@ optional = true
 codespell = "^2.2.0"
 
 
+[tool.poetry.group.cpp]
+optional = true
+
+[tool.poetry.group.cpp.dependencies]
+pybind11 = "^2.13.0"
+
 [tool.poetry.group.dev]
 optional = true
 
